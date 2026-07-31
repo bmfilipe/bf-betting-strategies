@@ -73,7 +73,7 @@ def render_tab_admin():
 
             new_odds_key = st.text_input(
                 "The Odds API Key (www.the-odds-api.com)",
-                value=st.session_state.get("odds_api_key", "0679363fc9fed7e8be5414173c5c1b8a"),
+                value=st.session_state.get("odds_api_key", ""),
                 type="password",
                 help="Chave de API do serviço The Odds API para cotações realistas em tempo real."
             )

@@ -73,7 +73,7 @@ def render_tab_ingestion():
         if st.button(btn_label, type="primary", width="stretch"):
             if "The Odds API" in active_provider:
                 with st.spinner(f"A obter cotações reais via The Odds API (www.the-odds-api.com) para até {max_matches} jogos de {today_str}..."):
-                    odds_key = st.session_state.get("odds_api_key", "0679363fc9fed7e8be5414173c5c1b8a")
+                    odds_key = st.session_state.get("odds_api_key", "")
                     matches, msg = OddsApiService.fetch_today_matches(
                         odds_key,
                         selected_countries=selected_countries,
