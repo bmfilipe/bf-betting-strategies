@@ -87,9 +87,8 @@ def start_application():
         if not os.path.exists(app_path):
             app_path = os.path.abspath("app.py")
         
-        with open(app_path, "r", encoding="utf-8") as f:
-            code = compile(f.read(), app_path, "exec")
-            exec(code, globals())
+        import runpy
+        runpy.run_path(app_path, run_name="__main__")
         return
 
 
