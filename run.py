@@ -5,6 +5,10 @@ import webbrowser
 import threading
 import time
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
 def is_cloud_environment() -> bool:
     """Detect if running inside Streamlit Community Cloud or remote cloud container."""
     return bool(
