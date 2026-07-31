@@ -128,32 +128,11 @@ else:
         st.markdown("---")
         render_tab_admin()
     else:
-        current_tab = active_view if active_view in nav_options else nav_options[0]
+        tab1, tab2, tab3 = st.tabs(nav_options)
+        with tab1:
+            render_tab_ingestion()
+        with tab2:
+            render_tab_analysis()
+        with tab3:
+            render_tab_slips()
 
-        if hasattr(st, "segmented_control"):
-            selected_nav = st.segmented_control(
-                "Navegação Principal",
-                options=nav_options,
-                default=current_tab,
-                label_visibility="collapsed"
-            )
-            if selected_nav and selected_nav != st.session_state.get("active_tab"):
-                st.session_state["active_tab"] = selected_nav
-                st.rerun()
-
-            active_view = st.session_state.get("active_tab", nav_options[0])
-            if active_view == nav_options[0]:
-                render_tab_ingestion()
-            elif active_view == nav_options[1]:
-                render_tab_analysis()
-            elif active_view == nav_options[2]:
-                render_tab_slips()
-
-        else:
-            tab1, tab2, tab3 = st.tabs(nav_options)
-            with tab1:
-                render_tab_ingestion()
-            with tab2:
-                render_tab_analysis()
-            with tab3:
-                render_tab_slips()
