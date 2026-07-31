@@ -142,75 +142,76 @@ def render_tab_ingestion():
         st.info("💡 **Nenhum jogo em memória de momento.** Clica no botão **'🔎 Pesquisar Jogos de Hoje'** acima para pesquisar partidas reais em tempo real via Gemini Flash.")
         return
 
-    # Controls bar above the table: Search input and Show count
-    col_search, col_show, col_metric = st.columns([2, 1, 1])
+    @st.fragment
+    def render_matches_table_fragment(all_matches):
+        # Controls bar above the table: Search input and Show count
+        col_search, col_show, col_metric = st.columns([2, 1, 1])
 
-    with col_search:
-        search_query = st.text_input("🔍 Pesquisar em jogos encontrados (equipa, liga, mercado...):", "")
+        with col_search:
+            search_query = st.text_input("🔍 Pesquisar em jogos encontrados (equipa, liga, mercado...):", "", key="ingest_search_query")
 
-    with col_show:
-        show_option = st.selectbox("Mostrar partidas:", options=[20, 50, 100, "Tudo"], index=0)
+        with col_show:
+            show_option = st.selectbox("Mostrar partidas:", options=[20, 50, 100, "Tudo"], index=0, key="ingest_show_option")
 
-    with col_metric:
-        st.metric("Total Jogos", f"{len(matches)}")
+        with col_metric:
+            st.metric("Total Jogos", f"{len(all_matches)}")
 
-    # Apply search query filter
-    filtered_matches = matches
-    if search_query:
-        q = search_query.lower()
-        filtered_matches = [
-            m for m in matches
-            if q in str(m.get("home", "")).lower()
-            or q in str(m.get("away", "")).lower()
-            or q in str(m.get("country", "")).lower()
-            or q in str(m.get("league", "")).lower()
-            or q in str(m.get("market", "")).lower()
-        ]
+        # Apply search query filter
+        filtered_matches = all_matches
+        if search_query:
+            q = search_query.lower()
+            filtered_matches = [
+                m for m in all_matches
+                if q in str(m.get("home", "")).lower()
+                or q in str(m.get("away", "")).lower()
+                or q in str(m.get("country", "")).lower()
+                or q in str(m.get("league", "")).lower()
+                or q in str(m.get("market", "")).lower()
+            ]
 
-    # Apply limit
-    if show_option != "Tudo":
-        limit = int(show_option)
-        display_matches = filtered_matches[:limit]
-    else:
-        display_matches = filtered_matches
-
-    st.write(f"### 📋 Tabela de Jogos Mapeados ({len(display_matches)} de {len(matches)} exibidos)")
-
-    df = pd.DataFrame(display_matches)
-    if not df.empty:
-        # Re-structure columns to prioritize 1X2, Total Goals, BTTS & Bold Recommended Market
-        column_mapping = {
-            "country": "País",
-            "league": "Liga",
-            "home": "Equipa Casa",
-            "away": "Equipa Fora",
-            "odd_1": "Odd (1)",
-            "odd_x": "Odd (X)",
-            "odd_2": "Odd (2)",
-            "odd_o05": "Odd (+0.5)",
-            "odd_o15": "Odd (+1.5)",
-            "odd_o25": "Odd (+2.5)",
-            "odd_btts_yes": "Odd (BTTS Sim)",
-            "odd_btts_no": "Odd (BTTS Não)",
-            "market": "Mercado Recomendado"
-        }
-
-        # Format columns if present
-        cols_present = [c for c in column_mapping.keys() if c in df.columns]
-        display_df = df[cols_present].rename(columns=column_mapping)
-
-        # Apply bold styling to Mercado Recomendado column
-        def bold_market(val):
-            return 'font-weight: bold; color: #38bdf8; background-color: rgba(56, 189, 248, 0.15);'
-
-        if "Mercado Recomendado" in display_df.columns:
-            if hasattr(display_df.style, "map"):
-                styled_df = display_df.style.map(bold_market, subset=["Mercado Recomendado"])
-            else:
-                styled_df = display_df.style.applymap(bold_market, subset=["Mercado Recomendado"])
-            st.dataframe(styled_df, width="stretch")
+        # Apply limit
+        if show_option != "Tudo":
+            limit = int(show_option)
+            display_matches = filtered_matches[:limit]
         else:
-            st.dataframe(display_df, width="stretch")
+            display_matches = filtered_matches
+
+        st.write(f"### 📋 Tabela de Jogos Mapeados ({len(display_matches)} de {len(all_matches)} exibidos)")
+
+        df = pd.DataFrame(display_matches)
+        if not df.empty:
+            column_mapping = {
+                "country": "País",
+                "league": "Liga",
+                "home": "Equipa Casa",
+                "away": "Equipa Fora",
+                "odd_1": "Odd (1)",
+                "odd_x": "Odd (X)",
+                "odd_2": "Odd (2)",
+                "odd_o05": "Odd (+0.5)",
+                "odd_o15": "Odd (+1.5)",
+                "odd_o25": "Odd (+2.5)",
+                "odd_btts_yes": "Odd (BTTS Sim)",
+                "odd_btts_no": "Odd (BTTS Não)",
+                "market": "Mercado Recomendado"
+            }
+
+            cols_present = [c for c in column_mapping.keys() if c in df.columns]
+            display_df = df[cols_present].rename(columns=column_mapping)
+
+            def bold_market(val):
+                return 'font-weight: bold; color: #38bdf8; background-color: rgba(56, 189, 248, 0.15);'
+
+            if "Mercado Recomendado" in display_df.columns:
+                if hasattr(display_df.style, "map"):
+                    styled_df = display_df.style.map(bold_market, subset=["Mercado Recomendado"])
+                else:
+                    styled_df = display_df.style.applymap(bold_market, subset=["Mercado Recomendado"])
+                st.dataframe(styled_df, width="stretch")
+            else:
+                st.dataframe(display_df, width="stretch")
+
+    render_matches_table_fragment(matches)
 
         with st.expander("📝 Editar ou Inserir Dados Manualmente (JSON)"):
             json_str = st.text_area(

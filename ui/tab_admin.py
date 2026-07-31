@@ -104,6 +104,17 @@ def render_tab_admin():
                 st.session_state["email_sender"] = new_sender.strip()
                 st.session_state["email_password"] = new_pass.strip()
 
+                try:
+                    from database.db import save_setting
+                    save_setting("odds_provider", new_odds_provider, "SETTINGS")
+                    save_setting("odds_api_key", new_odds_key.strip(), "VAULT")
+                    save_setting("api_football_key", new_api_football_key.strip(), "VAULT")
+                    save_setting("gemini_key", new_gemini.strip(), "VAULT")
+                    save_setting("ngrok_key", new_ngrok.strip(), "VAULT")
+                    save_setting("email_sender", new_sender.strip(), "SETTINGS")
+                except Exception:
+                    pass
+
                 if new_ngrok.strip():
                     try:
                         import os
@@ -114,3 +125,48 @@ def render_tab_admin():
                         pass
 
                 st.success(f"Configurações atualizadas com sucesso! Provedor ativo: {new_odds_provider}")
+
+        # JSON Backup Export and Import Box
+        st.markdown("---")
+        with st.container(border=True):
+            st.markdown("### 📦 Backup & Repositório de Configurações (JSON)")
+            st.write("Exporta todas as chaves e parâmetros do aplicativo num único ficheiro `.json`, ou importa uma configuração prévia para restaurar o sistema.")
+
+            col_exp, col_imp = st.columns(2)
+
+            with col_exp:
+                st.markdown("#### 📥 Exportar Configurações")
+                try:
+                    import datetime
+                    from database.db import export_settings_json
+                    json_export_data = export_settings_json()
+                    st.download_button(
+                        label="💾 Descarregar Backup JSON (bfbetting_config.json)",
+                        data=json_export_data,
+                        file_name=f"bfbetting_config_{datetime.date.today().strftime('%Y%m%d')}.json",
+                        mime="application/json",
+                        type="primary",
+                        width="stretch"
+                    )
+                except Exception as json_err:
+                    st.error(f"Erro ao gerar exportação JSON: {json_err}")
+
+            with col_imp:
+                st.markdown("#### 📤 Importar Configurações")
+                uploaded_json = st.file_uploader("Carregar ficheiro .json de configuração:", type=["json"], key="json_config_uploader")
+                if uploaded_json is not None:
+                    if st.button("⚡ Aplicar Configurações do Ficheiro", type="primary", width="stretch"):
+                        try:
+                            from database.db import import_settings_json, load_settings
+                            json_content = uploaded_json.read().decode("utf-8")
+                            success, msg = import_settings_json(json_content)
+                            if success:
+                                new_settings = load_settings()
+                                for k, v in new_settings.items():
+                                    st.session_state[k] = v
+                                st.success(msg)
+                                st.rerun()
+                            else:
+                                st.error(msg)
+                        except Exception as imp_err:
+                            st.error(f"Erro ao processar ficheiro: {imp_err}")
