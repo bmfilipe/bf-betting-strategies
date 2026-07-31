@@ -5,7 +5,7 @@ import webbrowser
 import threading
 import time
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
@@ -79,17 +79,16 @@ def setup_ngrok_tunnel(port: int, domain: str, ngrok_token: str):
 
 def start_application():
     """Start Streamlit server and optional Ngrok tunnel with auto browser launch."""
+    root = globals().get("ROOT_DIR") or (os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd())
+    
     # If running on Streamlit Cloud, run app directly without spawning sub-processes
     if is_cloud_environment():
-        app_path = os.path.join(ROOT_DIR, "app.py")
-        with open(app_path, "r", encoding="utf-8") as f:
-            code = compile(f.read(), app_path, "exec")
-        exec_scope = {
-            "__name__": "__main__",
-            "__file__": app_path,
-            "__builtins__": __builtins__
-        }
-        exec(code, exec_scope)
+        app_path = os.path.join(root, "app.py")
+        if not os.path.exists(app_path):
+            app_path = os.path.abspath("app.py")
+        
+        import runpy
+        runpy.run_path(app_path, run_name="__main__")
         return
 
 
