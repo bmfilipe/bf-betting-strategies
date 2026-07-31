@@ -77,10 +77,15 @@ def start_application():
     """Start Streamlit server and optional Ngrok tunnel with auto browser launch."""
     # If running on Streamlit Cloud, run app directly without spawning sub-processes
     if is_cloud_environment():
-        app_path = os.path.join(os.path.dirname(__file__), "app.py")
+        app_path = os.path.join(ROOT_DIR, "app.py")
         with open(app_path, "r", encoding="utf-8") as f:
             code = compile(f.read(), app_path, "exec")
-        exec(code, globals())
+        exec_scope = {
+            "__name__": "__main__",
+            "__file__": app_path,
+            "__builtins__": __builtins__
+        }
+        exec(code, exec_scope)
         return
 
 
