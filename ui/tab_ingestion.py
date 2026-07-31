@@ -213,18 +213,18 @@ def render_tab_ingestion():
 
     render_matches_table_fragment(matches)
 
-        with st.expander("📝 Editar ou Inserir Dados Manualmente (JSON)"):
-            json_str = st.text_area(
-                "Payload JSON dos Jogos",
-                value=pd.Series([matches]).to_json(orient='records')[1:-1],
-                height=200
-            )
-            if st.button("💾 Atualizar Dados da Tabela"):
-                try:
-                    import json
-                    parsed = json.loads(json_str)
-                    st.session_state["matches_data"] = parsed
-                    st.success("Dados atualizados com sucesso!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Formato JSON inválido: {str(e)}")
+    with st.expander("📝 Editar ou Inserir Dados Manualmente (JSON)"):
+        json_str = st.text_area(
+            "Payload JSON dos Jogos",
+            value=pd.Series([matches]).to_json(orient='records')[1:-1],
+            height=200
+        )
+        if st.button("💾 Atualizar Dados da Tabela"):
+            try:
+                import json
+                parsed = json.loads(json_str)
+                st.session_state["matches_data"] = parsed
+                st.success("Dados atualizados com sucesso!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Formato JSON inválido: {str(e)}")
