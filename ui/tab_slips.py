@@ -16,10 +16,23 @@ def render_tab_slips():
     # Configuration controls
     with st.container(border=True):
         st.markdown("#### ⚙️ Configurações & Modo de Estratégia dos Boletins")
-        col_cfg1, col_cfg2, col_cfg3, col_cfg4 = st.columns(4)
+        col_cfg1, col_cfg_risk, col_cfg2, col_cfg3, col_cfg4 = st.columns([1, 1.3, 1, 1, 1.5])
 
         with col_cfg1:
             n_games = st.selectbox("Jogos por Boletim (Múltipla):", options=[2, 3, 4, 5], index=1)
+
+        with col_cfg_risk:
+            risk_options = [
+                "🟢 Risco Baixo (Odds Baixas / Favoritos)",
+                "🟡 Risco Médio (Odds Equilibradas / +EV)",
+                "🔴 Risco Alto (Odds Elevadas / Retorno Alto)"
+            ]
+            risk_profile = st.selectbox(
+                "Perfil de Risco do Boletim:",
+                options=risk_options,
+                index=1,
+                help="Risco Baixo prioriza odds baixas/seguras; Risco Alto prioriza odds elevadas para máximo retorno potencial."
+            )
 
         with col_cfg2:
             num_boletins = st.slider("Quantidade de Boletins a Gerar:", min_value=1, max_value=10, value=5)
@@ -104,13 +117,13 @@ def render_tab_slips():
         return
 
     strat_names = ", ".join(selected_strategies)
-    st.info(f"📍 **Estratégias Ativas ({len(selected_strategies)}):** {strat_names} | **{total_unique_matches} partidas distintas** disponíveis (zero jogos repetidos por bilhete).")
+    st.info(f"📍 **Perfil de Risco:** {risk_profile} | **Estratégias Ativas ({len(selected_strategies)}):** {strat_names} | **{total_unique_matches} partidas distintas** disponíveis.")
     st.markdown("---")
 
     boletins_generated = []
 
     for b_idx in range(num_boletins):
-        st.markdown(f"#### 🎫 Boletim #{b_idx + 1}")
+        st.markdown(f"#### 🎫 Boletim #{b_idx + 1} — {risk_profile.split(' (')[0]}")
 
         # Deterministic rotation of distinct matches per slip
         start_idx = (b_idx * n_games) % total_unique_matches
@@ -123,8 +136,15 @@ def render_tab_slips():
             odd_total = 1.0
             for title in selected_titles:
                 available_items = match_dict[title]
-                # Pick best EV item for this match in the strategy pool
-                item = sorted(available_items, key=lambda x: x["Expected Value (+EV) (%)"], reverse=True)[0]
+                
+                # Apply risk profile sorting strategy
+                if "🟢 Risco Baixo" in risk_profile:
+                    item = sorted(available_items, key=lambda x: (x.get("Odd", 1.5), -x.get("Expected Value (+EV) (%)", 0)))[0]
+                elif "🔴 Risco Alto" in risk_profile:
+                    item = sorted(available_items, key=lambda x: (x.get("Odd", 1.5), x.get("Expected Value (+EV) (%)", 0)), reverse=True)[0]
+                else:
+                    item = sorted(available_items, key=lambda x: x.get("Expected Value (+EV) (%)", 0), reverse=True)[0]
+
                 odd_total *= item["Odd"]
                 detalhe_str = f"[{item['País']} - {item['Liga']}] {item['Jogo']} | Mercado: **{item['Mercado']}** (Odd: {item['Odd']:.2f} | +EV: {item['Expected Value (+EV) (%)']:+.1f}%)"
                 jogos_detalhe.append(detalhe_str)
@@ -142,6 +162,7 @@ def render_tab_slips():
 
         boletins_generated.append({
             "boletim_id": b_idx + 1,
+            "risk_profile": risk_profile.split(" (")[0],
             "jogos_detalhe": jogos_detalhe,
             "odd_total": odd_total,
             "stake": stake_b,
