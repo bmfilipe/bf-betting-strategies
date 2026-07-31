@@ -29,12 +29,36 @@ apply_custom_styles()
 
 # Landing Page (Página Inicial se app_started for False)
 if not st.session_state.get("app_started", False):
-    st.markdown("""
-    <div style="text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; margin-bottom: 30px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+    # Top Action Bar with Theme Toggle on Landing Page
+    col_l_blank, col_l_theme = st.columns([4, 1], vertical_alignment="center")
+    with col_l_theme:
+        current_theme = st.session_state.get("theme_mode", "dark")
+        theme_btn_label = "☀️ Claro" if current_theme == "dark" else "🌙 Escuro"
+        if st.button(theme_btn_label, width="stretch", help="Alternar entre Modo Escuro (Dark) e Modo Claro (Light)"):
+            st.session_state["theme_mode"] = "light" if current_theme == "dark" else "dark"
+            st.rerun()
+
+    # Adaptive Hero Banner Colors
+    current_theme = st.session_state.get("theme_mode", "dark")
+    if current_theme == "light":
+        hero_bg = "linear-gradient(135deg, #e2e8f0 0%, #ffffff 100%)"
+        hero_title_color = "#0284c7"
+        hero_text_color = "#334155"
+        hero_border = "1px solid #cbd5e1"
+        hero_shadow = "0 10px 30px rgba(0, 0, 0, 0.08)"
+    else:
+        hero_bg = "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)"
+        hero_title_color = "#38bdf8"
+        hero_text_color = "#94a3b8"
+        hero_border = "1px solid #334155"
+        hero_shadow = "0 10px 30px rgba(0, 0, 0, 0.5)"
+
+    st.markdown(f"""
+    <div style="text-align: center; padding: 40px 20px; background: {hero_bg}; border-radius: 16px; margin-bottom: 30px; border: {hero_border}; box-shadow: {hero_shadow};">
         <div style="font-size: 64px; margin-bottom: 10px;">⚽</div>
-        <h1 style="color: #38bdf8; font-size: 42px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px;">BF Analista de Futebol</h1>
-        <p style="color: #94a3b8; font-size: 18px; max-width: 800px; margin: 0 auto 25px auto; line-height: 1.6;">
-            Sistema Quantitativo de Análise Preditiva (+EV), Matrizes Estatísticas de Poisson & Geração Dinâmica de Boletins de Apostas Desportivas em Tempo Real.
+        <h1 style="color: {hero_title_color}; font-size: 42px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px;">BF Analista de Futebol</h1>
+        <p style="color: {hero_text_color}; font-size: 18px; max-width: 800px; margin: 0 auto 25px auto; line-height: 1.6;">
+            Sistema Quantitativo de Análise Preditiva (+EV), Matrizes Estatísticas de Poisson &amp; Geração Dinâmica de Boletins de Apostas Desportivas em Tempo Real.
         </p>
     </div>
     """, unsafe_allow_html=True)
