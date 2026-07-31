@@ -1,7 +1,7 @@
 import streamlit as st
 
 def apply_custom_styles():
-    """Apply premium modern CSS styling to Streamlit app (Dark / Light mode support)."""
+    """Apply premium modern CSS styling to Streamlit app (Dark / Light page background support)."""
     theme_mode = st.session_state.get("theme_mode", "dark")
     
     if theme_mode == "light":
@@ -10,8 +10,8 @@ def apply_custom_styles():
         text_color = "#0f172a"
         subtitle_color = "#475569"
         border_color = "rgba(15, 23, 42, 0.12)"
-        title_bg = "linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%)"
-        tab_bg = "rgba(241, 245, 249, 0.8)"
+        title_bg = "linear-gradient(135deg, #e2e8f0 0%, #ffffff 100%)"
+        tab_bg = "rgba(226, 232, 240, 0.8)"
         tab_active_bg = "#ffffff"
     else:
         bg_color = "#0f172a"
@@ -32,6 +32,13 @@ def apply_custom_styles():
         font-family: 'Inter', sans-serif;
     }}
 
+    /* Main Page Background Theme Control */
+    .stApp, [data-testid="stAppViewContainer"], section.main, [data-testid="stHeader"] {{
+        background-color: {bg_color} !important;
+        color: {text_color} !important;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }}
+
     /* Header styling & Vertical Alignment */
     div[data-testid="stHorizontalBlock"]:has(.app-title-container) {{
         align-items: center !important;
@@ -42,7 +49,7 @@ def apply_custom_styles():
         border-radius: 10px;
         padding: 6px 14px;
         color: {text_color};
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         border: 1px solid {border_color};
         display: flex;
         align-items: center;
