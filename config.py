@@ -252,12 +252,21 @@ def _get_secret(key_name: str, default_val: str = "") -> str:
     return os.environ.get(key_name, default_val)
 
 def init_session_state():
-    """Ensure all required session state variables exist."""
+    """Ensure all required session state variables exist and load stored SQLite data."""
+    try:
+        from database.db import load_matches_from_db, load_analysis_from_db, init_db
+        init_db()
+        stored_matches = load_matches_from_db()
+        stored_analysis = load_analysis_from_db()
+    except Exception:
+        stored_matches = []
+        stored_analysis = []
+
     defaults = {
         "app_started": False,
         "confirm_exit": False,
-        "matches_data": [],
-        "analysed_results": [],
+        "matches_data": stored_matches,
+        "analysed_results": stored_analysis,
         "filtered_matches": [],
         "gemini_key": _get_secret("GEMINI_API_KEY", ""),
         "odds_provider": "The Odds API (the-odds-api.com)",
@@ -268,9 +277,14 @@ def init_session_state():
         "email_password": _get_secret("EMAIL_PASSWORD", ""),
         "is_admin": False,
         "active_tab": "🔍 Obter Jogos (Odds API / OddsPortal / Gemini)",
-        "last_ingestion_log": ""
+        "last_ingestion_log": f"Carregados {len(stored_matches)} jogos salvos da base de dados SQLite (bfbetting.db)." if stored_matches else ""
     }
 
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
+        elif key == "matches_data" and not st.session_state["matches_data"] and stored_matches:
+            st.session_state["matches_data"] = stored_matches
+        elif key == "analysed_results" and not st.session_state["analysed_results"] and stored_analysis:
+            st.session_state["analysed_results"] = stored_analysis
+

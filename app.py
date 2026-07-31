@@ -75,24 +75,25 @@ if not st.session_state.get("app_started", False):
 # Main Application Dashboard
 else:
     # Top Action Bar with App Title, Admin Quick Access, and Exit Button
-    col_hdr1, col_hdr_admin, col_hdr_exit = st.columns([3, 1, 1])
+    col_hdr1, col_hdr_admin, col_hdr_exit = st.columns([3, 1, 1], vertical_alignment="center")
 
     with col_hdr1:
         st.markdown("""
-        <div class="app-title-container" style="padding: 10px 15px;">
-            <h2 class="app-title" style="font-size: 24px; margin: 0;">⚽ BF Analista de Futebol</h2>
-            <p class="app-subtitle" style="margin: 0; font-size: 13px;">Ingestão em Tempo Real • Matrizes de Poisson 7x7 • Boletins por Estratégia (+EV)</p>
+        <div class="app-title-container">
+            <div class="header-logo-badge">⚽</div>
+            <div>
+                <h2 class="app-title">BF Analista de Futebol</h2>
+                <p class="app-subtitle">Ingestão em Tempo Real • Matrizes de Poisson 7x7 • Boletins por Estratégia (+EV)</p>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
     with col_hdr_admin:
-        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
         if st.button("🔒 Área de Administrador", width="stretch"):
             st.session_state["active_tab"] = "🔒 Área de Administrador"
             st.rerun()
 
     with col_hdr_exit:
-        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
         if st.button("🚪 Sair da Aplicação", width="stretch"):
             st.session_state["confirm_exit"] = True
 

@@ -11,28 +11,57 @@ def apply_custom_styles():
         font-family: 'Inter', sans-serif;
     }
 
-    /* Header styling */
+    /* Header styling & Vertical Alignment */
+    div[data-testid="stHorizontalBlock"]:has(.app-title-container) {
+        align-items: center !important;
+    }
+
     .app-title-container {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        border-radius: 12px;
-        padding: 24px;
+        border-radius: 10px;
+        padding: 6px 14px;
         color: #ffffff;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        margin-bottom: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 42px;
+        box-sizing: border-box;
     }
+
+    .header-logo-badge {
+        font-size: 22px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(56, 189, 248, 0.15);
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        border-radius: 8px;
+        padding: 4px 8px;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+
     .app-title {
-        font-size: 2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         margin: 0;
+        line-height: 1.2;
         background: linear-gradient(90deg, #38bdf8, #818cf8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        white-space: nowrap;
     }
+
     .app-subtitle {
         color: #94a3b8;
-        font-size: 1rem;
-        margin-top: 6px;
+        font-size: 0.78rem;
+        margin: 0;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Metric Cards */

@@ -104,6 +104,13 @@ def render_tab_ingestion():
             st.session_state["matches_data"] = matches
             st.session_state["last_ingestion_log"] = msg
 
+            if matches:
+                try:
+                    from database.db import save_matches_to_db
+                    save_matches_to_db(matches)
+                except Exception as db_err:
+                    print(f"[DB ERROR] Erro ao guardar em SQLite: {db_err}")
+
             if "Sucesso" in msg:
                 st.success(msg)
             elif "Aviso" in msg:
@@ -115,8 +122,13 @@ def render_tab_ingestion():
         if st.button("🗑️ Limpar Dados em Memória", width="stretch"):
             st.session_state["matches_data"] = []
             st.session_state["analysed_results"] = []
-            st.session_state["last_ingestion_log"] = "Dados de memória limpos."
-            st.info("Memória de dados limpa com sucesso.")
+            st.session_state["last_ingestion_log"] = "Dados de memória e base de dados SQLite limpos."
+            try:
+                from database.db import clear_db
+                clear_db()
+            except Exception as db_err:
+                print(f"[DB ERROR] Erro ao limpar SQLite: {db_err}")
+            st.info("Memória de dados e base de dados SQLite limpas com sucesso.")
             st.rerun()
 
     if st.session_state.get("last_ingestion_log"):

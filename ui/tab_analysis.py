@@ -104,6 +104,14 @@ def render_tab_analysis():
                 "ExpGoalsAway": base_res["ExpGoalsAway"]
             })
 
+    if evaluated_markets:
+        st.session_state["analysed_results"] = evaluated_markets
+        try:
+            from database.db import save_analysis_to_db
+            save_analysis_to_db(evaluated_markets)
+        except Exception as db_err:
+            print(f"[DB ERROR] Erro ao guardar analise em SQLite: {db_err}")
+
     # Interactive Filter Controls
     with st.container(border=True):
         st.markdown("#### 🎛️ Filtros de Análise, Estratégias & Gestão de Banca")
