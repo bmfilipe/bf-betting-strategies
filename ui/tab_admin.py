@@ -212,19 +212,16 @@ def render_tab_admin():
                     - **Relatórios & PDF:** FPDF2, Pandas, Plotly Express
                     """)
 
-            st.markdown("#### 📜 Histórico de Versões & Changelog")
+            st.markdown("#### 📜 Histórico de Versões & Changelog (versions.txt)")
             with st.container(border=True):
-                st.markdown("""
-                * **v2.5.0 (31/07/2026)**
-                  - Implementada a **Base de Dados SQLite Relacional** (`database/bfbetting.db`) com tabelas tipadas e indexadas.
-                  - Adicionado o **Sistema de Backup & Restore JSON** de configurações no Painel Admin.
-                  - Adicionado o **Seletor de Modo Dark / Light** na barra de ferramentas superior.
-                  - Reorganizada a **Área de Administração em Separadores (`st.tabs`)**.
-                  - Adicionado o decorador `@st.fragment` para tabelas de alta performance sem recarregamentos globais.
-                * **v2.0.0 (31/07/2026)**
-                  - Suporte a múltiplos provedores de odds (The Odds API, API-Football v3, OddsPortal e Gemini 2.5 Flash).
-                  - Implementação do Motor de Poisson 7x7 e Gestão de Banca com Critério de Kelly.
-                  - Geração Combinatória de Boletins (+EV) sem jogos duplicados com exportação em PDF, TXT e CSV.
-                * **v1.0.0 (2026)**
-                  - Lançamento inicial da aplicação com cálculo de Valor Esperado (+EV) e interface básica.
-                """)
+                try:
+                    import os
+                    versions_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "versions.txt")
+                    if os.path.exists(versions_path):
+                        with open(versions_path, "r", encoding="utf-8") as vf:
+                            versions_content = vf.read()
+                        st.code(versions_content, language="text")
+                    else:
+                        st.info("Ficheiro versions.txt não encontrado na raiz do projeto.")
+                except Exception as ve:
+                    st.error(f"Erro ao ler versions.txt: {ve}")

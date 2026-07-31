@@ -1,0 +1,26 @@
+===============================================================================
+BF ANALISTA DE FUTEBOL - HISTÓRICO DE VERSÕES & CHANGELOG (versions.txt)
+===============================================================================
+
+[v2.5.0] - 2026-07-31
+-------------------------------------------------------------------------------
+- Base de Dados SQLite Relacional: Implementado o gestor de base de dados relacional (database/bfbetting.db) com tabelas tipadas e indexadas (matches, evaluations, bet_slips, app_settings, ingestion_logs).
+- Auto-Migração Dinâmica de Esquemas: Mecanismo automático para deteção e adição de colunas em falta em tabelas SQLite preexistentes.
+- Sistema de Backup & Restore JSON: Exportação e importação completa de definições e chaves do vault em ficheiros .json no Painel de Administração.
+- Separadores na Área de Administração: Reorganização da área restrita em 4 sub-separadores (Vault, Backup JSON, Google Colab e Sobre o Aplicativo).
+- Integração Dinâmica com versions.txt: O separador 'Sobre' lê e exibe automaticamente o histórico de versões diretamente deste ficheiro.
+- Alternador de Modo Dark / Light: Seletor no topo da aplicação com suporte completo a temas Escuro e Claro no fundo da página, botões e caixas de texto com alto contraste.
+- Otimização com @st.fragment: Tabela de jogos com filtragem interativa sem recarregamento global da página.
+- Logótipo Personalizado: Adicionado o logótipo da bola de futebol estilizado e alinhamento vertical dos botões do topo.
+
+[v2.0.0] - 2026-07-31
+-------------------------------------------------------------------------------
+- Múltiplos Provedores de Odds: Integração com The Odds API, API-Football (v3), OddsPortal Feed e Gemini 2.5 Flash.
+- Motor Quantitativo Poisson 7x7: Cálculo de matrizes de probabilidades implícitas e estimadas.
+- Dimencionamento de Banca Kelly: Implementação da fórmula de Kelly Fracionado (1/4 Kelly) para gestão de risco.
+- Gerador Combinatório de Boletins (+EV): Criação de apostas simples e acumuladas sem duplicação de jogos.
+- Exportação Multiformato: Exportação de boletins em PDF (FPDF2), TXT e CSV.
+
+[v1.0.0] - 2026-07-15
+-------------------------------------------------------------------------------
+- Lançamento inicial da aplicação com cálculo simples de Valor Esperado (+EV) e interface Streamlit.
