@@ -240,6 +240,17 @@ DEFAULT_MOCK_MATCHES = [
 ]
 
 
+def _get_secret(key_name: str, default_val: str = "") -> str:
+    """Retrieve secret from Streamlit Cloud secrets, environment variable, or fallback default."""
+    try:
+        if hasattr(st, "secrets") and key_name in st.secrets:
+            val = str(st.secrets[key_name]).strip()
+            if val:
+                return val
+    except Exception:
+        pass
+    return os.environ.get(key_name, default_val)
+
 def init_session_state():
     """Ensure all required session state variables exist."""
     defaults = {
@@ -248,13 +259,13 @@ def init_session_state():
         "matches_data": [],
         "analysed_results": [],
         "filtered_matches": [],
-        "gemini_key": os.environ.get("GEMINI_API_KEY", "AIzaSyCWnt9Foq226tOF7IG4JSx8lVLvqL1biq8"),
+        "gemini_key": _get_secret("GEMINI_API_KEY", "AIzaSyCWnt9Foq226tOF7IG4JSx8lVLvqL1biq8"),
         "odds_provider": "The Odds API (the-odds-api.com)",
-        "odds_api_key": os.environ.get("ODDS_API_KEY", "0679363fc9fed7e8be5414173c5c1b8a"),
-        "api_football_key": os.environ.get("API_FOOTBALL_KEY", ""),
-        "ngrok_key": os.environ.get("NGROK_AUTHTOKEN", "3Gtx36ExMiXQAki5sFVrwTmOoC2_4CEFuYvnLQjUX5jYWcJyA"),
-        "email_sender": "",
-        "email_password": "",
+        "odds_api_key": _get_secret("ODDS_API_KEY", "0679363fc9fed7e8be5414173c5c1b8a"),
+        "api_football_key": _get_secret("API_FOOTBALL_KEY", ""),
+        "ngrok_key": _get_secret("NGROK_AUTHTOKEN", "3Gtx36ExMiXQAki5sFVrwTmOoC2_4CEFuYvnLQjUX5jYWcJyA"),
+        "email_sender": _get_secret("EMAIL_SENDER", ""),
+        "email_password": _get_secret("EMAIL_PASSWORD", ""),
         "is_admin": False,
         "active_tab": "🔍 Obter Jogos (Odds API / OddsPortal / Gemini)",
         "last_ingestion_log": ""
