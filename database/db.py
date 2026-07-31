@@ -50,6 +50,38 @@ def init_db():
     )
     """)
     
+    # Auto-migration for existing database tables missing columns
+    cursor.execute("PRAGMA table_info(matches)")
+    existing_cols = [row["name"] for row in cursor.fetchall()]
+    cols_to_add = [
+        ("country", "TEXT"),
+        ("league", "TEXT"),
+        ("home_team", "TEXT"),
+        ("away_team", "TEXT"),
+        ("h_xg", "REAL"),
+        ("a_xg", "REAL"),
+        ("h_xga", "REAL"),
+        ("a_xga", "REAL"),
+        ("odd_1", "REAL"),
+        ("odd_x", "REAL"),
+        ("odd_2", "REAL"),
+        ("odd_o05", "REAL"),
+        ("odd_o15", "REAL"),
+        ("odd_o25", "REAL"),
+        ("odd_btts_yes", "REAL"),
+        ("odd_btts_no", "REAL"),
+        ("home_form", "TEXT"),
+        ("away_form", "TEXT"),
+        ("h2h_summary", "TEXT"),
+        ("provider", "TEXT")
+    ]
+    for col_name, col_type in cols_to_add:
+        if col_name not in existing_cols:
+            try:
+                cursor.execute(f"ALTER TABLE matches ADD COLUMN {col_name} {col_type}")
+            except Exception:
+                pass
+
     # Indexes for fast search
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_teams ON matches(home_team, away_team)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_matches_league ON matches(country, league)")

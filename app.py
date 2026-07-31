@@ -74,8 +74,8 @@ if not st.session_state.get("app_started", False):
 
 # Main Application Dashboard
 else:
-    # Top Action Bar with App Title, Admin Quick Access, and Exit Button
-    col_hdr1, col_hdr_admin, col_hdr_exit = st.columns([3, 1, 1], vertical_alignment="center")
+    # Top Action Bar with App Title, Theme Toggle, Admin Quick Access, and Exit Button
+    col_hdr1, col_hdr_theme, col_hdr_admin, col_hdr_exit = st.columns([2.8, 0.8, 1, 1], vertical_alignment="center")
 
     with col_hdr1:
         st.markdown("""
@@ -87,6 +87,13 @@ else:
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+    with col_hdr_theme:
+        current_theme = st.session_state.get("theme_mode", "dark")
+        theme_btn_label = "☀️ Claro" if current_theme == "dark" else "🌙 Escuro"
+        if st.button(theme_btn_label, width="stretch", help="Alternar entre Modo Escuro (Dark) e Modo Claro (Light)"):
+            st.session_state["theme_mode"] = "light" if current_theme == "dark" else "dark"
+            st.rerun()
 
     with col_hdr_admin:
         if st.button("🔒 Área de Administrador", width="stretch"):
