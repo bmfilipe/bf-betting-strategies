@@ -1,10 +1,12 @@
 import json
 import urllib.request
 import urllib.parse
+import urllib.error
 import datetime
 import math
 import ssl
-from config import DEFAULT_MOCK_MATCHES
+from typing import Tuple, Dict, Any, List, Optional
+from config import DEFAULT_MOCK_MATCHES, infer_country_and_league, normalize_team_name, deduplicate_matches_by_teams
 
 class OddsApiService:
     """
@@ -14,6 +16,12 @@ class OddsApiService:
     """
 
     BASE_URL = "https://api.the-odds-api.com/v4"
+
+    @staticmethod
+    def _derive_country_name(sport_title: str, home_team: str = "", away_team: str = "") -> str:
+        """Derive clean, accurate country name from sport title or team names."""
+        cname, _ = infer_country_and_league(home_team, away_team, raw_league=sport_title)
+        return cname
 
     # Mapping from UI selected country/league filter to The Odds API sport keys
     COUNTRY_SPORT_MAP = {
@@ -29,18 +37,42 @@ class OddsApiService:
             "soccer_uefa_europa_conference_league"
         ],
         "Brasil (Brasileirão Serie A / Serie B)": ["soccer_brazil_campeonato", "soccer_brazil_serie_b"],
-        "Países Baixos (Eredivisie)": ["soccer_netherlands_eredivisie"],
-        "Bélgica (Pro League)": ["soccer_belgium_first_div"],
-        "Turquia (Süper Lig)": ["soccer_turkey_super_league"],
+        "Países Baixos (Eredivisie / Eerste Divisie)": ["soccer_netherlands_eredivisie"],
+        "Bélgica (Pro League / Challenger Pro League)": ["soccer_belgium_first_div"],
+        "Turquia (Süper Lig / 1. Lig)": ["soccer_turkey_super_league"],
         "Argentina (Liga Profesional)": ["soccer_argentina_primera_division"],
         "EUA / América do Norte (MLS)": ["soccer_usa_mls"],
         "Escócia (Premiership)": ["soccer_scotland_premier_league"],
+<<<<<<< HEAD
         "Suécia (Allsvenskan)": ["soccer_sweden_allsvenskan"],
         "Noruega (Eliteserien)": ["soccer_norway_eliteserien"],
         "Dinamarca (Superliga)": ["soccer_denmark_superliga"],
         "Suíça (Super League)": ["soccer_switzerland_superleague"],
         "Áustria (Bundesliga)": ["soccer_austria_bundesliga"],
         "Islandia (Primeira Liga / Segunda Liga)": ["soccer_iceland_urvalsdeild"]
+=======
+        "Suécia (Allsvenskan / Superettan)": ["soccer_sweden_allsvenskan"],
+        "Noruega (Eliteserien / OBOS-ligaen)": ["soccer_norway_eliteserien"],
+        "Dinamarca (Superliga / 1st Division)": ["soccer_denmark_superliga"],
+        "Suíça (Super League / Challenge League)": ["soccer_switzerland_superleague"],
+        "Áustria (Bundesliga / 2. Liga)": ["soccer_austria_bundesliga"],
+        "Polónia (Ekstraklasa / 1. Liga)": ["soccer_poland_ekstraklasa"],
+        "Finlândia (Veikkausliiga / Ykkösliiga)": ["soccer_finland_veikkausliiga"],
+        "Grécia (Super League 1 / Super League 2)": ["soccer_greece_super_league"],
+        "República Checa (Chance Liga / FNL)": ["soccer_czech_republic"],
+        "Roménia (SuperLiga / Liga II)": ["soccer_romania_liga_1"],
+        "Croácia (HNL / Prva NL)": ["soccer_croatia_hnl"],
+        "Sérvia (SuperLiga / Prva Liga)": ["soccer_serbia_superliga"],
+        "Japão (J1 League / J2 League)": ["soccer_japan_j_league"],
+        "México (Liga MX / Liga de Expansión)": ["soccer_mexico_liga_mx"],
+        "Colômbia (Categoría Primera A / Primera B)": ["soccer_colombia_primera_a"],
+        "Outras Ligas Internacionais": [
+            "soccer_greece_super_league",
+            "soccer_poland_ekstraklasa",
+            "soccer_japan_j_league",
+            "soccer_chile_campeonato"
+        ]
+>>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
     }
 
     @staticmethod
@@ -66,7 +98,7 @@ class OddsApiService:
             return None
 
     @classmethod
-    def _http_get(cls, url: str) -> tuple[dict | list | None, dict, str]:
+    def _http_get(cls, url: str) -> Tuple[Any, Dict, str]:
         """Helper to make HTTP GET request and extract JSON payload, response headers, and error msg if any."""
         ctx = cls._create_ssl_context()
         try:
@@ -99,7 +131,7 @@ class OddsApiService:
     def fetch_today_matches(
         cls,
         api_key: str,
-        selected_countries: list[str] = None,
+        selected_countries: Optional[List[str]] = None,
         max_matches: int = 20
     ) -> tuple[list[dict], str]:
         """
@@ -110,6 +142,8 @@ class OddsApiService:
             return DEFAULT_MOCK_MATCHES, "Aviso: Key do The Odds API não configurada na Área de Administrador. A utilizar dados de demonstração."
 
         clean_key = api_key.strip()
+        today_str = datetime.date.today().strftime("%Y-%m-%d")
+        today_formatted = datetime.date.today().strftime("%d/%m/%Y")
         
         # Step 1: Query active sports from API to find active soccer keys
         sports_url = f"{cls.BASE_URL}/sports/?apiKey={clean_key}"
@@ -228,16 +262,20 @@ class OddsApiService:
                         outcomes = mkt.get("outcomes", [])
 
                         if mkt_key == "h2h":
+                            h_norm = normalize_team_name(home_team)
+                            a_norm = normalize_team_name(away_team)
                             for out in outcomes:
                                 name = out.get("name", "").strip()
                                 price = out.get("price")
                                 if price and price > 1.0:
-                                    if name.lower() == home_team.lower() or name == home_team:
-                                        h2h_1_prices.append(float(price))
-                                    elif name.lower() == away_team.lower() or name == away_team:
-                                        h2h_2_prices.append(float(price))
-                                    elif name.lower() in ["draw", "empate"]:
+                                    if name.lower() in ["draw", "empate"]:
                                         h2h_x_prices.append(float(price))
+                                    else:
+                                        o_norm = normalize_team_name(name)
+                                        if o_norm == h_norm or (o_norm and o_norm in h_norm) or (h_norm and h_norm in o_norm):
+                                            h2h_1_prices.append(float(price))
+                                        elif o_norm == a_norm or (o_norm and o_norm in a_norm) or (a_norm and a_norm in o_norm):
+                                            h2h_2_prices.append(float(price))
 
                         elif mkt_key == "totals":
                             for out in outcomes:
@@ -320,9 +358,11 @@ class OddsApiService:
                     recommended_market = "Dupla Hipótese (1X)"
                     recommended_odd = odd_1x
 
-                country_name = sport_title.split("-")[0].strip() if "-" in sport_title else "Internacional"
+                country_name = cls._derive_country_name(sport_title, home_team, away_team)
 
                 matches_found.append({
+                    "date": today_str,
+                    "date_formatted": today_formatted,
                     "country": country_name,
                     "league": sport_title,
                     "home": home_team,
@@ -420,7 +460,9 @@ class OddsApiService:
                     odd_x2 = round(1.0 / min(0.99, max(0.01, px + p2)), 2)
 
                     matches_found.append({
-                        "country": sport_title.split("-")[0].strip() if "-" in sport_title else "Internacional",
+                        "date": today_str,
+                        "date_formatted": today_formatted,
+                        "country": cls._derive_country_name(sport_title, home_team, away_team),
                         "league": sport_title,
                         "home": home_team,
                         "away": away_team,
@@ -449,7 +491,9 @@ class OddsApiService:
                     })
 
         if matches_found:
-            msg = f"Sucesso: {len(matches_found)} partidas reais captadas via The Odds API (www.the-odds-api.com)! [Quota Restante API: {remaining_quota} pedidos]"
-            return matches_found, msg
+            from config import deduplicate_matches_by_teams
+            clean_matches = deduplicate_matches_by_teams(matches_found)
+            msg = f"Sucesso: {len(clean_matches)} partidas reais captadas via The Odds API (www.the-odds-api.com)! [Quota Restante API: {remaining_quota} pedidos]"
+            return clean_matches, msg
         else:
             return DEFAULT_MOCK_MATCHES, f"Aviso: Nenhuma partida encontrada na The Odds API para os filtros selecionados. [Quota Restante API: {remaining_quota}]. A carregar dados de demonstração."

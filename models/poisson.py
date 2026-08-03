@@ -44,6 +44,38 @@ class PoissonEngine:
             return 1.0 if k == 0 else 0.0
         return (math.pow(lmbda, k) * math.exp(-lmbda)) / math.factorial(k)
 
+    @staticmethod
+    def calculate_match_probabilities(exp_g_home: float, exp_g_away: float) -> dict:
+        """
+        Calculate 1X2, Over 2.5 and BTTS probabilities and fair odds
+        directly from expected home and away goals using Poisson distribution.
+        """
+        engine = PoissonEngine()
+        prob_matrix = engine.generate_probability_matrix(exp_g_home, exp_g_away, matrix_size=7)
+
+        p_home = float(np.sum(np.tril(prob_matrix, -1)))
+        p_draw = float(np.sum(np.diag(prob_matrix)))
+        p_away = float(np.sum(np.triu(prob_matrix, 1)))
+
+        p_o25 = float(np.sum([prob_matrix[h][a] for h in range(7) for a in range(7) if (h + a) > 2.5]))
+        p_btts_yes = float(np.sum([prob_matrix[h][a] for h in range(1, 7) for a in range(1, 7)]))
+
+        def fair_odd(p: float) -> float:
+            return round(1.0 / p, 2) if p > 0.001 else 99.00
+
+        return {
+            "prob_home_win": p_home,
+            "fair_odd_1": fair_odd(p_home),
+            "prob_draw": p_draw,
+            "fair_odd_x": fair_odd(p_draw),
+            "prob_away_win": p_away,
+            "fair_odd_2": fair_odd(p_away),
+            "prob_over_25": p_o25,
+            "fair_odd_o25": fair_odd(p_o25),
+            "prob_btts_yes": p_btts_yes,
+            "fair_odd_btts_yes": fair_odd(p_btts_yes)
+        }
+
     def dixon_coles_tau(self, h: int, a: int, lmbda: float, mu: float, rho: float = -0.13) -> float:
         """
         Dixon-Coles adjustment factor for low-scoring outcomes (0-0, 1-0, 0-1, 1-1).

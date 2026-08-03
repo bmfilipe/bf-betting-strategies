@@ -1,10 +1,14 @@
 import json
 import urllib.request
 import urllib.parse
+import urllib.error
 import datetime
 import math
 import ssl
+from typing import Tuple, Dict, Any, List, Optional
 from config import DEFAULT_MOCK_MATCHES
+
+from config import infer_country_and_league
 
 class ApiFootballIngestionService:
     """
@@ -39,7 +43,7 @@ class ApiFootballIngestionService:
             return None
 
     @classmethod
-    def _http_get(cls, url: str, api_key: str) -> tuple[dict | None, dict, str]:
+    def _http_get(cls, url: str, api_key: str) -> Tuple[Optional[Dict], Dict, str]:
         """Helper to make HTTP GET request to API-Football using direct or RapidAPI authentication headers."""
         ctx = cls._create_ssl_context()
         headers = {
@@ -73,7 +77,7 @@ class ApiFootballIngestionService:
     def fetch_today_matches(
         cls,
         api_key: str,
-        selected_countries: list[str] = None,
+        selected_countries: Optional[List[str]] = None,
         max_matches: int = 20
     ) -> tuple[list[dict], str]:
         """
@@ -85,6 +89,7 @@ class ApiFootballIngestionService:
 
         clean_key = api_key.strip()
         today_str = datetime.date.today().strftime("%Y-%m-%d")
+        today_formatted = datetime.date.today().strftime("%d/%m/%Y")
 
         # Attempt querying direct API-Sports endpoint first, then RapidAPI host
         fixtures_url = f"{cls.DIRECT_URL}/fixtures?date={today_str}"
@@ -132,8 +137,11 @@ class ApiFootballIngestionService:
             home_team = teams_info.get("home", {}).get("name", "").strip()
             away_team = teams_info.get("away", {}).get("name", "").strip()
 
-            country = league_info.get("country", "Internacional").strip()
-            league_name = league_info.get("name", "Futebol").strip()
+            country, league_name = infer_country_and_league(
+                home_team, away_team,
+                raw_league=league_info.get("name", ""),
+                raw_country=league_info.get("country", "")
+            )
 
             if not home_team or not away_team:
                 continue
@@ -210,6 +218,8 @@ class ApiFootballIngestionService:
             odd_rec = odd_1 if odd_1 <= 1.85 else odd_1x
 
             matches_found.append({
+                "date": today_str,
+                "date_formatted": today_formatted,
                 "country": country,
                 "league": f"{country} - {league_name}",
                 "home": home_team,
@@ -239,7 +249,9 @@ class ApiFootballIngestionService:
             })
 
         if matches_found:
-            msg = f"Sucesso: {len(matches_found)} partidas reais captadas via API-Football (api-sports.io)! [Pedidos Restantes Hoje: {remaining_requests}]"
-            return matches_found, msg
+            from config import deduplicate_matches_by_teams
+            clean_matches = deduplicate_matches_by_teams(matches_found)
+            msg = f"Sucesso: {len(clean_matches)} partidas reais captadas via API-Football (api-sports.io)! [Pedidos Restantes Hoje: {remaining_requests}]"
+            return clean_matches, msg
 
         return DEFAULT_MOCK_MATCHES, f"Aviso: Nenhuma partida encontrada na API-Football para hoje ({today_str}). A carregar dados de demonstração."

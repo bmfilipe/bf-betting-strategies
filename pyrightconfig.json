@@ -1,0 +1,11 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonPath": ".venv/bin/python",
+  "extraPaths": [
+    ".",
+    "ui",
+    "services",
+    "database"
+  ]
+}

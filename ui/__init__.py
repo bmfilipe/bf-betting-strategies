@@ -1,12 +1,16 @@
 try:
     from .styles import apply_custom_styles
     from .tab_ingestion import render_tab_ingestion
+    from .tab_live import render_tab_live
+    from .tab_h2h import render_tab_h2h
     from .tab_analysis import render_tab_analysis
     from .tab_slips import render_tab_slips
     from .tab_admin import render_tab_admin
 except (ImportError, KeyError, Exception):
     from ui.styles import apply_custom_styles
     from ui.tab_ingestion import render_tab_ingestion
+    from ui.tab_live import render_tab_live
+    from ui.tab_h2h import render_tab_h2h
     from ui.tab_analysis import render_tab_analysis
     from ui.tab_slips import render_tab_slips
     from ui.tab_admin import render_tab_admin
@@ -14,6 +18,8 @@ except (ImportError, KeyError, Exception):
 __all__ = [
     "apply_custom_styles",
     "render_tab_ingestion",
+    "render_tab_live",
+    "render_tab_h2h",
     "render_tab_analysis",
     "render_tab_slips",
     "render_tab_admin"

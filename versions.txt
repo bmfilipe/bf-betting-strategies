@@ -2,6 +2,42 @@
 BF ANALISTA DE FUTEBOL - HISTÓRICO DE VERSÕES & CHANGELOG (versions.txt)
 ===============================================================================
 
+[v3.4.0] - 2026-08-02
+-------------------------------------------------------------------------------
+- Filtro Estrito da Data de Hoje na Pesquisa: Validação rigorosa para garantir que a pesquisa de jogos exibe exclusivamente partidas agendadas para o próprio dia (ex: 02/08/2026). Eliminação da suplementação automática de jogos fictícios ou de dias seguintes durante pesquisas ativas.
+- Simplificação do Cabeçalho Superior: Remoção do subtítulo 'Ingestão em Tempo Real • Matrizes de Poisson 7x7 • Boletins por Estratégia (+EV)' e alinhamento centrado limpo entre o logótipo ⚽ e a designação 'BF Analista de Futebol'.
+- Integridade de Ingestão e SQLite: Garantia de filtragem por data do próprio dia em `ui/tab_ingestion.py` e `database/db.py`.
+
+[v3.3.0] - 2026-08-02
+-------------------------------------------------------------------------------
+- Motor Inteligente de Deduplicação de Equipas: Garantia estrita de que nenhuma equipa (seja em casa ou fora) joga mais do que uma partida na mesma data em todas as pesquisas.
+- Eliminação de Jogos Repetidos e Invertidos: Deteção e remoção de confrontos com equipas duplicadas (ex: A vs B e B vs A, ou a mesma equipa a jogar contra adversários diferentes no mesmo dia).
+- Normalização Canónica de Nomes de Equipas: Limpeza inteligente de prefixos/sufixos desportivos (ex: FC, SL, CP, AC, SC, Club) para equivalência de nomes em todas as origens de dados.
+- Sincronização na Ingestão, Filtros e SQLite: Aplicação da regra de unicidade por data em `config.py`, `ui/tab_ingestion.py`, `services/gemini_ingestion.py` e `database/db.py`.
+
+[v3.2.0] - 2026-08-01
+-------------------------------------------------------------------------------
+- Remoção do Filtro 'Internacional': Eliminação da opção em 'Filtrar por Países / Competições Alvo' no separador 'Obter Jogos' para evitar a entrada de partidas duplicadas ou com origens não mapeadas.
+- Personalização da Cor da Barra Lateral (Sidebar): Adicionada opção no menu para selecionar cores de fundo personalizadas (Padrão, Vermelho, Azul, Verde) com ajuste automático da tipografia e legibilidade de alto contraste (texto em branco e amarelo).
+- Destaque na Seta de Colapso/Expansão do Menu: Estilização dedicada em CSS com contorno proeminente, fundo escuro/claro e brilho azul para garantir visibilidade perfeita nos Modos Claro (Light) e Escuro (Dark).
+
+[v3.1.0] - 2026-08-01
+-------------------------------------------------------------------------------
+- Correção de Duplicados & Jogos Invertidos: Implementação de deduplicação canónica bidirecional (home vs away e away vs home) para eliminar jogos repetidos ou com equipas trocadas.
+- Coluna Data do Jogo na Ingestão: Adição explícita da coluna 'Data do Jogo' (`date_formatted`) no início da tabela para auditoria da data das pesquisas de futebol.
+- Expansão de Países e Competições: Inclusão de Finlândia, Grécia, República Checa, Roménia, Croácia, Sérvia, Japão, México e Colômbia com 1ª e 2ª divisões no mesmo filtro.
+- Integridade da Base de Dados SQLite: Auto-migração da tabela `matches` em `bfbetting.db` com gravação relacional de datas, odds completas (1X, X2, +3.5, DNB) e mercado recomendado.
+- Modo Claro (Light Mode) por Defeito: Configuração padrão da aplicação e das definições do Streamlit para iniciar em Modo Claro com alto contraste.
+
+[v3.0.0] - 2026-08-01
+-------------------------------------------------------------------------------
+- Página de Jogos ao Vivo (Live Scores): Ingestão em tempo real de partidas in-play via API-Football (v3 live=all) e motor open-source com suporte a minutos, golos, odds ao vivo e gravação em SQLite.
+- Página de Comparador de Equipas (H2H): Motor de Web Scraping para comparação detalhada de duas equipas, incluindo histórico recente de partidas, médias de golos, métricas defensivas e matriz de Poisson H2H.
+- Gestão de Base de Dados SQLite no Administrador: Novo separador 'Base de Dados' com estatísticas de tabelas, limpeza geral ou de tabelas específicas, download/substituição do ficheiro bfbetting.db e exportação para CSV e JSON.
+- Novas Tabelas Relacionais: Adicionadas as tabelas SQLite `live_matches`, `team_h2h_history` e `team_stats_cache` com índices otimizados.
+- Expansão de Navegação: Adicionados cartões de novidades na landing page e navegação direta na barra lateral esquerda para todas as 5 páginas principais.
+- Documentação (.agents & README): Atualização integral da estrutura do projeto na pasta .agents e no ficheiro README.md na raiz.
+
 [v2.5.0] - 2026-07-31
 -------------------------------------------------------------------------------
 - Base de Dados SQLite Relacional: Implementado o gestor de base de dados relacional (database/bfbetting.db) com tabelas tipadas e indexadas (matches, evaluations, bet_slips, app_settings, ingestion_logs).

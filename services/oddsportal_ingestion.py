@@ -3,11 +3,14 @@ import re
 import time
 import urllib.request
 import urllib.parse
+import urllib.error
 import http.cookiejar
 import datetime
 import math
 import ssl
 from config import DEFAULT_MOCK_MATCHES
+
+from typing import Optional, List
 
 class OddsPortalIngestionService:
     """
@@ -82,7 +85,7 @@ class OddsPortalIngestionService:
     @classmethod
     def fetch_today_matches(
         cls,
-        selected_countries: list[str] = None,
+        selected_countries: Optional[List[str]] = None,
         max_matches: int = 20
     ) -> tuple[list[dict], str]:
         """
@@ -95,7 +98,7 @@ class OddsPortalIngestionService:
         cls._http_get(opener, "https://www.oddsportal.com/matches/football/", "https://www.oddsportal.com/")
 
         time_now_s = int(time.time())
-        time_now_ms = int(round(time.time() * 1000))
+        time_now_ms = round(time.time() * 1000)
         today_date_str = datetime.date.today().strftime("%Y%m%d")
 
         # Step 2: Fetch bookmakers dictionary
@@ -196,7 +199,11 @@ class OddsPortalIngestionService:
                             market_rec = "Vitória Casa (1)" if odd_1 <= 1.85 else "Dupla Hipótese (1X)"
                             odd_rec = odd_1 if odd_1 <= 1.85 else odd_1x
 
+                            today_s = datetime.date.today().strftime("%Y-%m-%d")
+                            today_f = datetime.date.today().strftime("%d/%m/%Y")
                             matches_found.append({
+                                "date": today_s,
+                                "date_formatted": today_f,
                                 "country": country,
                                 "league": league,
                                 "home": home,
@@ -228,8 +235,10 @@ class OddsPortalIngestionService:
                 last_err = str(e)
 
         if matches_found:
-            msg = f"Sucesso: {len(matches_found)} partidas reais captadas via OddsPortal Feed (www.oddsportal.com)!"
-            return matches_found, msg
+            from config import deduplicate_matches_by_teams
+            clean_matches = deduplicate_matches_by_teams(matches_found)
+            msg = f"Sucesso: {len(clean_matches)} partidas reais captadas via OddsPortal Feed (www.oddsportal.com)!"
+            return clean_matches, msg
 
         # Helpful explanation of Cloudflare bot protection on scraping endpoints + recommended provider
         err_hint = f" ({last_err})" if last_err else ""

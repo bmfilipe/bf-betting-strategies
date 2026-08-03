@@ -6,6 +6,8 @@ from google import genai
 from google.genai import types
 from config import DEFAULT_MOCK_MATCHES
 
+from typing import Optional, List
+
 class GeminiIngestionService:
     """
     Ingestion service to fetch today's real football matches with xG / xGA metrics
@@ -36,7 +38,7 @@ class GeminiIngestionService:
     def fetch_today_matches(
         cls,
         api_key: str,
-        selected_countries: list[str] = None,
+        selected_countries: Optional[List[str]] = None,
         max_matches: int = 20
     ) -> tuple[list[dict], str]:
         """
@@ -125,6 +127,8 @@ class GeminiIngestionService:
                 }}
             ]
             NÃO inventes partidas fictícias. Apenas jogos REAIS agendados para {today_str}.
+            REGRA RÍGIDA DE UNICIDADE: CADA EQUIPA SÓ PODE JOGAR NO MÁXIMO UM JOGO NA DATA DE HOJE ({today_str}). NENHUMA EQUIPA PODE APARECER DUPLICADA EM MAIS DO QUE UM JOGO (SEJA EM CASA OU FORA). NÃO INVENTES PARTIDAS INVERTIDAS NEM JOGOS REPETIDOS PARA A MESMA EQUIPA.
+            COERÊNCIA DE ODDS 1X2: A odd_1 DEVE corresponder à vitória da Equipa da CASA (home) e odd_2 à vitória do VISITANTE (away). A equipa favorita DEVE ter a odd menor. NUNCA Invertas a odd_1 com a odd_2.
             """
 
             # Attempt content generation with Google Search grounding enabled
@@ -154,7 +158,7 @@ class GeminiIngestionService:
                         contents=prompt
                     )
 
-            raw_text = response.text if hasattr(response, 'text') else str(response)
+            raw_text = getattr(response, "text", None) or str(response or "")
 
             # Strip markdown codeblocks
             clean_str = raw_text.replace("```json", "").replace("```", "").strip()
@@ -178,13 +182,25 @@ class GeminiIngestionService:
                         odd_x_val = cls._safe_float(item.get("odd_x"), 3.80)
                         odd_2_val = cls._safe_float(item.get("odd_2"), 4.80)
 
+                        h_xg_val = cls._safe_float(item.get("h_xg"), 1.5)
+                        a_xg_val = cls._safe_float(item.get("a_xg"), 1.0)
+
+                        # Automatic Coherence check for LLM-inverted odds (Home favorite vs Away underdog)
+                        if h_xg_val >= a_xg_val + 0.4 and odd_1_val >= odd_2_val + 1.0:
+                            odd_1_val, odd_2_val = odd_2_val, odd_1_val
+                        elif a_xg_val >= h_xg_val + 0.4 and odd_2_val >= odd_1_val + 1.0:
+                            odd_1_val, odd_2_val = odd_2_val, odd_1_val
+
+                        today_fmt = datetime.date.today().strftime("%d/%m/%Y")
                         cleaned.append({
+                            "date": today_str,
+                            "date_formatted": today_fmt,
                             "country": cls._safe_str(item.get("country"), "Geral"),
                             "league": cls._safe_str(item.get("league"), "Geral"),
                             "home": cls._safe_str(item.get("home"), "Equipa Casa"),
                             "away": cls._safe_str(item.get("away"), "Equipa Fora"),
-                            "h_xg": cls._safe_float(item.get("h_xg"), 1.5),
-                            "a_xg": cls._safe_float(item.get("a_xg"), 1.0),
+                            "h_xg": h_xg_val,
+                            "a_xg": a_xg_val,
                             "h_xga": cls._safe_float(item.get("h_xga"), 1.0),
                             "a_xga": cls._safe_float(item.get("a_xga"), 1.5),
                             "odd_1": odd_1_val,
@@ -207,8 +223,11 @@ class GeminiIngestionService:
                             "market": cls._safe_str(item.get("market"), "Vitória Casa (1)")
                         })
 
-                if cleaned:
-                    return cleaned, f"Sucesso: {len(cleaned)} jogos reais obtidos em tempo real para a data de hoje ({today_str}) via Gemini Flash!"
+                from config import deduplicate_matches_by_teams
+                cleaned_dedup = deduplicate_matches_by_teams(cleaned)
+
+                if cleaned_dedup:
+                    return cleaned_dedup, f"Sucesso: {len(cleaned_dedup)} jogos reais obtidos em tempo real para a data de hoje ({today_str}) via Gemini Flash!"
 
             return DEFAULT_MOCK_MATCHES, f"Aviso: Não foram encontrados dados JSON na resposta de hoje ({today_str}). A carregar dados de demonstração."
 

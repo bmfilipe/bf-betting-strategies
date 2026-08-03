@@ -34,9 +34,10 @@ def render_tab_admin():
         st.markdown("---")
 
         # Admin Sub-Tabs Navigation
-        admin_tab1, admin_tab2, admin_tab3, admin_tab4 = st.tabs([
+        admin_tab1, admin_tab2, admin_tab3, admin_tab4, admin_tab5 = st.tabs([
             "⚙️ Vault & Chaves de API",
             "📦 Backup & Importação (JSON)",
+            "🗄️ Base de Dados (SQLite)",
             "⚡ Google Colab (.ipynb)",
             "ℹ️ Sobre o Aplicativo"
         ])
@@ -89,30 +90,30 @@ def render_tab_admin():
 
                 if save_submit:
                     st.session_state["odds_provider"] = new_odds_provider
-                    st.session_state["odds_api_key"] = new_odds_key.strip()
-                    st.session_state["api_football_key"] = new_api_football_key.strip()
-                    st.session_state["gemini_key"] = new_gemini.strip()
-                    st.session_state["ngrok_key"] = new_ngrok.strip()
-                    st.session_state["email_sender"] = new_sender.strip()
-                    st.session_state["email_password"] = new_pass.strip()
+                    st.session_state["odds_api_key"] = (new_odds_key or "").strip()
+                    st.session_state["api_football_key"] = (new_api_football_key or "").strip()
+                    st.session_state["gemini_key"] = (new_gemini or "").strip()
+                    st.session_state["ngrok_key"] = (new_ngrok or "").strip()
+                    st.session_state["email_sender"] = (new_sender or "").strip()
+                    st.session_state["email_password"] = (new_pass or "").strip()
 
                     try:
                         from database.db import save_setting
                         save_setting("odds_provider", new_odds_provider, "SETTINGS")
-                        save_setting("odds_api_key", new_odds_key.strip(), "VAULT")
-                        save_setting("api_football_key", new_api_football_key.strip(), "VAULT")
-                        save_setting("gemini_key", new_gemini.strip(), "VAULT")
-                        save_setting("ngrok_key", new_ngrok.strip(), "VAULT")
-                        save_setting("email_sender", new_sender.strip(), "SETTINGS")
+                        save_setting("odds_api_key", (new_odds_key or "").strip(), "VAULT")
+                        save_setting("api_football_key", (new_api_football_key or "").strip(), "VAULT")
+                        save_setting("gemini_key", (new_gemini or "").strip(), "VAULT")
+                        save_setting("ngrok_key", (new_ngrok or "").strip(), "VAULT")
+                        save_setting("email_sender", (new_sender or "").strip(), "SETTINGS")
                     except Exception:
                         pass
 
-                    if new_ngrok.strip():
+                    if (new_ngrok or "").strip():
                         try:
                             import os
                             token_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".ngrok_token")
                             with open(token_path, "w", encoding="utf-8") as f:
-                                f.write(new_ngrok.strip())
+                                f.write((new_ngrok or "").strip())
                         except Exception:
                             pass
 
@@ -165,8 +166,133 @@ def render_tab_admin():
                             except Exception as imp_err:
                                 st.error(f"Erro ao processar ficheiro: {imp_err}")
 
-        # SUB-TAB 3: Google Colab Generator
+        # SUB-TAB 3: Database Management (SQLite)
         with admin_tab3:
+            st.markdown("### 🗄️ Ferramentas & Gestão da Base de Dados (`bfbetting.db`)")
+            st.write("Monitoriza a saúde do SQLite, limpa tabelas específicas, descarrega/repõe o ficheiro `.db` e exporta dados para CSV e JSON.")
+
+            try:
+                from database.db import (
+                    get_db_tables_stats, clear_db, clear_specific_table,
+                    export_table_to_csv, export_table_to_json, restore_db_file, DB_PATH
+                )
+                import os
+                import pandas as pd
+
+                # 1. Database Health Overview
+                stats = get_db_tables_stats()
+                db_size_kb = round(os.path.getsize(DB_PATH) / 1024, 2) if os.path.exists(DB_PATH) else 0
+
+                st.markdown("#### 📊 Estado das Tabelas & Tamanho da BD")
+                st.caption(f"Ficheiro local: `{DB_PATH}` | Tamanho total: `{db_size_kb} KB`")
+
+                df_stats = pd.DataFrame([
+                    {"Tabela": "matches", "Descrição": "Jogos Pré-Jogo Ingeridos", "Registos": stats.get("matches", 0)},
+                    {"Tabela": "evaluations", "Descrição": "Análises Preditivas +EV", "Registos": stats.get("evaluations", 0)},
+                    {"Tabela": "bet_slips", "Descrição": "Boletins Gerados", "Registos": stats.get("bet_slips", 0)},
+                    {"Tabela": "live_matches", "Descrição": "Jogos Ao Vivo (In-Play)", "Registos": stats.get("live_matches", 0)},
+                    {"Tabela": "team_h2h_history", "Descrição": "Histórico H2H & Scraping", "Registos": stats.get("team_h2h_history", 0)},
+                    {"Tabela": "app_settings", "Descrição": "Definições e Vault", "Registos": stats.get("app_settings", 0)},
+                    {"Tabela": "ingestion_logs", "Descrição": "Logs de Ingestão", "Registos": stats.get("ingestion_logs", 0)}
+                ])
+                st.dataframe(df_stats, use_container_width=True, hide_index=True)
+
+                st.markdown("---")
+
+                # 2. Database Backup, Restore & Clear Tools
+                dcol1, dcol2 = st.columns(2)
+
+                with dcol1:
+                    with st.container(border=True):
+                        st.markdown("#### 📥 Ficheiro `.db` (Backup & Restauro)")
+                        st.write("Descarregue o ficheiro SQLite completo ou faça upload para restaurar uma base de dados anterior.")
+                        
+                        if os.path.exists(DB_PATH):
+                            with open(DB_PATH, "rb") as db_file:
+                                db_bytes = db_file.read()
+                            st.download_button(
+                                label="💾 Descarregar Ficheiro bfbetting.db",
+                                data=db_bytes,
+                                file_name="bfbetting.db",
+                                mime="application/x-sqlite3",
+                                type="primary",
+                                width="stretch"
+                            )
+
+                        uploaded_db = st.file_uploader("Substituir / Repor ficheiro bfbetting.db:", type=["db", "sqlite3"], key="db_file_uploader")
+                        if uploaded_db is not None:
+                            if st.button("⚠️ Repor Base de Dados do Ficheiro", type="primary", width="stretch"):
+                                file_b = uploaded_db.read()
+                                ok, msg = restore_db_file(file_b)
+                                if ok:
+                                    st.success(msg)
+                                    st.rerun()
+                                else:
+                                    st.error(msg)
+
+                with dcol2:
+                    with st.container(border=True):
+                        st.markdown("#### 🧹 Limpeza de Tabelas")
+                        st.write("Limpe a base de dados em caso de testes ou reposição total.")
+                        
+                        table_to_clear = st.selectbox(
+                            "Selecionar Tabela Específica a Limpar:",
+                            options=["matches", "evaluations", "bet_slips", "live_matches", "team_h2h_history", "ingestion_logs"]
+                        )
+                        if st.button(f"🗑️ Limpar Tabela '{table_to_clear}'", width="stretch"):
+                            if clear_specific_table(table_to_clear):
+                                st.success(f"Tabela '{table_to_clear}' limpa com sucesso!")
+                                st.rerun()
+                            else:
+                                st.error("Erro ao limpar tabela.")
+
+                        st.markdown("---")
+                        confirm_all = st.checkbox("⚠️ Confirmo que pretendo LIMPAR TODAS AS TABELAS da base de dados.")
+                        if st.button("🔥 Limpar TODAS as Tabelas da BD", type="primary", width="stretch", disabled=not confirm_all):
+                            if clear_db():
+                                st.success("Base de dados totalmente limpa com sucesso!")
+                                st.rerun()
+                            else:
+                                st.error("Erro ao limpar base de dados.")
+
+                st.markdown("---")
+
+                # 3. Export Tables to CSV & JSON
+                st.markdown("#### 📤 Exportar Dados de Tabelas para CSV ou JSON")
+                exp_col1, exp_col2, exp_col3 = st.columns([2, 1, 1], vertical_alignment="center")
+
+                with exp_col1:
+                    export_table_name = st.selectbox(
+                        "Selecionar Tabela para Exportar:",
+                        options=["matches", "evaluations", "bet_slips", "live_matches", "team_h2h_history", "app_settings", "ingestion_logs"],
+                        key="db_export_table_select"
+                    )
+
+                with exp_col2:
+                    csv_data = export_table_to_csv(export_table_name)
+                    st.download_button(
+                        label=f"📄 Exportar para CSV",
+                        data=csv_data,
+                        file_name=f"{export_table_name}_{datetime.date.today().strftime('%Y%m%d')}.csv",
+                        mime="text/csv",
+                        width="stretch"
+                    )
+
+                with exp_col3:
+                    json_data = export_table_to_json(export_table_name)
+                    st.download_button(
+                        label=f"📊 Exportar para JSON",
+                        data=json_data,
+                        file_name=f"{export_table_name}_{datetime.date.today().strftime('%Y%m%d')}.json",
+                        mime="application/json",
+                        width="stretch"
+                    )
+
+            except Exception as db_mgr_err:
+                st.error(f"Erro na gestão de base de dados: {db_mgr_err}")
+
+        # SUB-TAB 4: Google Colab Generator
+        with admin_tab4:
             st.markdown("### ⚡ Exportação para Google Colab (.ipynb)")
             st.write("Gera o notebook Jupyter `.ipynb` pronto a ser executado diretamente no Google Colab com toda a estrutura de código, dependências e túnel Ngrok.")
 
@@ -184,8 +310,8 @@ def render_tab_admin():
                 except Exception as e:
                     st.error(f"Erro ao gerar notebook Colab: {str(e)}")
 
-        # SUB-TAB 4: About & Version History
-        with admin_tab4:
+        # SUB-TAB 5: About & Version History
+        with admin_tab5:
             st.markdown("### ℹ️ Sobre o BF Analista de Futebol")
 
             col_a1, col_a2 = st.columns([1, 1])
@@ -195,9 +321,9 @@ def render_tab_admin():
                     st.markdown("#### 📌 Informações da Aplicação")
                     st.markdown("""
                     - **Nome:** BF Analista de Futebol
-                    - **Versão Atual:** `v2.5.0`
+                    - **Versão Atual:** `v3.4.0`
                     - **Ambiente:** Streamlit Community Cloud / Local Python
-                    - **Arquitetura:** Quantitativa (+EV & Matrizes de Poisson 7x7)
+                    - **Arquitetura:** Quantitativa (+EV, Poisson 7x7 & Web Scraping)
                     - **Licença:** Proprietária / Uso Exclusivo
                     """)
 
@@ -208,8 +334,8 @@ def render_tab_admin():
                     - **Linguagem & Framework:** Python 3.14 & Streamlit 1.60.0
                     - **Base de Dados:** SQLite Relacional (`database/bfbetting.db`)
                     - **IA Generativa & Web Grounding:** Google Gemini 2.5 Flash
-                    - **APIs de Odds:** The Odds API, API-Football (v3), OddsPortal Feed
-                    - **Relatórios & PDF:** FPDF2, Pandas, Plotly Express
+                    - **APIs & Scraping:** The Odds API, API-Football (v3 - Live), Open-Source H2H WebScraping Engine
+                    - **Relatórios & Gráficos:** FPDF2, Pandas, Plotly Express
                     """)
 
             st.markdown("#### 📜 Histórico de Versões & Changelog (versions.txt)")
