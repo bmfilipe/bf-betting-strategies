@@ -8,60 +8,6 @@ from typing import List, Optional, Tuple, Dict, Any
 
 ADMIN_PASSWORD_HASH = "Admin#1976"
 
-<<<<<<< HEAD
-DEFAULT_MOCK_MATCHES = [
-    {
-        "country": "Europa",
-        "league": "Liga Europa",
-        "home": "Benfica",
-        "away": "St. Gallen",
-        "h_xg": 2.15,
-        "a_xg": 0.90,
-        "h_xga": 0.80,
-        "a_xga": 1.85,
-        "odd_1": 1.45,
-        "odd_x": 4.50,
-        "odd_2": 6.50,
-        "odd_o05": 1.05,
-        "odd_o15": 1.22,
-        "odd_o25": 1.62,
-        "odd_btts_yes": 1.75,
-        "odd_btts_no": 2.00,
-        "home_form": "V-D-V-D-V",
-        "away_form": "D-E-V-D-E",
-        "h2h_summary": "Últimos 3 confrontos: 2 Vitórias Benfica, 1 Empate (Média 3.3 golos/jogo)",
-        "odd": 1.45,
-        "market": "Vitória Casa (1)",
-        "date": "03/08/2026 21:00",
-        "result": "1-0 (Ao Vivo)",
-        "status": "LIVE"
-    },
-    {
-        "country": "Europa",
-        "league": "Liga Europa",
-        "home": "Anderlecht",
-        "away": "Hammarby",
-        "h_xg": 1.90,
-        "a_xg": 0.95,
-        "h_xga": 0.90,
-        "a_xga": 1.40,
-        "odd_1": 1.68,
-        "odd_x": 3.80,
-        "odd_2": 4.80,
-        "odd_o05": 1.08,
-        "odd_o15": 1.28,
-        "odd_o25": 1.85,
-        "odd_btts_yes": 1.80,
-        "odd_btts_no": 1.95,
-        "home_form": "V-E-V-V-D",
-        "away_form": "E-V-D-E-V",
-        "h2h_summary": "Primeiro confronto direto oficial registrado.",
-        "odd": 1.68,
-        "market": "Vitória Casa (1)",
-        "date": "03/08/2026 20:30",
-        "result": "Por iniciar",
-        "status": "SCHEDULED"
-=======
 LEAGUE_TEAMS_DATABASE = {
     "Portugal (Primeira Liga / Segunda Liga)": {
         "country": "Portugal",
@@ -85,7 +31,6 @@ LEAGUE_TEAMS_DATABASE = {
             ("Aston Villa", "Newcastle", 2.15, 3.40, 3.20, 1.75, 1.65),
             ("Brighton", "West Ham", 1.90, 3.70, 3.80, 1.90, 1.45)
         ]
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
     },
     "Espanha (La Liga / Segunda División)": {
         "country": "Espanha",

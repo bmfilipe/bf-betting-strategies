@@ -113,17 +113,6 @@ A aplicação combina ingestão de dados em tempo real através de múltiplos pr
 
 ```text
 bf-betting-strategies/
-<<<<<<< HEAD
-├── .agents/                    # Skills e diretivas de desenvolvimento Streamlit
-│   └── rules/                  # Regras detalhadas por página (filtros, botões, base de dados e matemática)
-│       ├── 01_landing_and_nav_rules.md
-│       ├── 02_ingestion_page_rules.md
-│       ├── 03_analysis_page_rules.md
-│       ├── 04_slips_page_rules.md
-│       ├── 05_admin_page_rules.md
-│       └── 06_database_and_math_rules.md
-├── app.py                      # Ponto de entrada da aplicação Streamlit
-=======
 ├── .agents/                    # Skills e diretivas de desenvolvimento Streamlit e arquitetura
 ├── .streamlit/                 # Definições de tema e segredos local (config.toml, secrets.toml)
 ├── database/                   # Módulo e armazenamento SQLite
@@ -148,7 +137,6 @@ bf-betting-strategies/
 │   ├── tab_slips.py            # Página 5: Gerador de boletins e exportações
 │   └── tab_admin.py            # Painel Admin (Vault, BD SQLite, Backup JSON, Colab, Sobre)
 ├── app.py                      # Ponto de entrada da aplicação Streamlit com navegação
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
 ├── config.py                   # Inicialização de estado e segredos
 ├── requirements.txt            # Lista de dependências Python
 ├── run.py                      # Script de arranque local com túnel Ngrok

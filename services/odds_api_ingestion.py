@@ -43,19 +43,12 @@ class OddsApiService:
         "Argentina (Liga Profesional)": ["soccer_argentina_primera_division"],
         "EUA / América do Norte (MLS)": ["soccer_usa_mls"],
         "Escócia (Premiership)": ["soccer_scotland_premier_league"],
-<<<<<<< HEAD
-        "Suécia (Allsvenskan)": ["soccer_sweden_allsvenskan"],
-        "Noruega (Eliteserien)": ["soccer_norway_eliteserien"],
-        "Dinamarca (Superliga)": ["soccer_denmark_superliga"],
-        "Suíça (Super League)": ["soccer_switzerland_superleague"],
-        "Áustria (Bundesliga)": ["soccer_austria_bundesliga"],
-        "Islandia (Primeira Liga / Segunda Liga)": ["soccer_iceland_urvalsdeild"]
-=======
         "Suécia (Allsvenskan / Superettan)": ["soccer_sweden_allsvenskan"],
         "Noruega (Eliteserien / OBOS-ligaen)": ["soccer_norway_eliteserien"],
         "Dinamarca (Superliga / 1st Division)": ["soccer_denmark_superliga"],
         "Suíça (Super League / Challenge League)": ["soccer_switzerland_superleague"],
         "Áustria (Bundesliga / 2. Liga)": ["soccer_austria_bundesliga"],
+        "Islandia (Primeira Liga / Segunda Liga)": ["soccer_iceland_urvalsdeild"],
         "Polónia (Ekstraklasa / 1. Liga)": ["soccer_poland_ekstraklasa"],
         "Finlândia (Veikkausliiga / Ykkösliiga)": ["soccer_finland_veikkausliiga"],
         "Grécia (Super League 1 / Super League 2)": ["soccer_greece_super_league"],
@@ -72,7 +65,6 @@ class OddsApiService:
             "soccer_japan_j_league",
             "soccer_chile_campeonato"
         ]
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
     }
 
     @staticmethod

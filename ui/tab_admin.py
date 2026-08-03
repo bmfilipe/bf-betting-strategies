@@ -195,7 +195,7 @@ def render_tab_admin():
                     {"Tabela": "app_settings", "Descrição": "Definições e Vault", "Registos": stats.get("app_settings", 0)},
                     {"Tabela": "ingestion_logs", "Descrição": "Logs de Ingestão", "Registos": stats.get("ingestion_logs", 0)}
                 ])
-                st.dataframe(df_stats, use_container_width=True, hide_index=True)
+                st.dataframe(df_stats, width="stretch", hide_index=True)
 
                 st.markdown("---")
 

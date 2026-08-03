@@ -1,14 +1,13 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import unicodedata
+
 from services.gemini_ingestion import GeminiIngestionService
 from services.odds_api_ingestion import OddsApiService
 from services.oddsportal_ingestion import OddsPortalIngestionService
 from services.api_football_ingestion import ApiFootballIngestionService
-from config import DEFAULT_MOCK_MATCHES
-
-import unicodedata
-from config import get_matches_for_selected_leagues, infer_country_and_league, normalize_team_name, deduplicate_matches_by_teams
+from config import DEFAULT_MOCK_MATCHES, get_matches_for_selected_leagues, infer_country_and_league, normalize_team_name, deduplicate_matches_by_teams
 
 def _strip_accents(text: str) -> str:
     """Normalize and strip accents for fuzzy keyword matching."""
@@ -77,17 +76,15 @@ def filter_matches_by_selection(matches: list, selected_countries: list, max_mat
     valid_today_matches = []
     seen_teams = set()
 
-    # 1. Enforce today's date strictly & filter input matches for selected countries
     if matches:
         for m in matches:
             m_raw_date = str(m.get("date", "")).strip()
             m_fmt_date = str(m.get("date_formatted", "")).strip()
 
-            # Strict date checking: match MUST belong to TODAY's date
             if m_raw_date:
                 m_date_clean = m_raw_date[:10]
                 if m_date_clean != today_str and m_fmt_date != today_fmt:
-                    continue  # Discard matches from future or past days
+                    continue
 
             c, l = infer_country_and_league(
                 str(m.get("home", "")), str(m.get("away", "")),
@@ -109,7 +106,6 @@ def filter_matches_by_selection(matches: list, selected_countries: list, max_mat
                 if h_norm in seen_teams or a_norm in seen_teams:
                     continue
 
-                # Coherence Guard for 1X2 Odds: ensure odd_1 belongs to Home and odd_2 to Away
                 try:
                     o1_val = float(m.get("odd_1", 2.0) or 2.0)
                     o2_val = float(m.get("odd_2", 2.0) or 2.0)
@@ -143,7 +139,6 @@ def filter_matches_by_selection(matches: list, selected_countries: list, max_mat
 
 def render_tab_ingestion():
     """Render Tab 1: Ingestão de Dados via Provedor Selecionado (The Odds API / OddsPortal / Gemini)."""
-    # Sanitize session state matches to ensure no legacy 'Internacional' strings remain
     if "matches_data" in st.session_state and st.session_state["matches_data"]:
         for m in st.session_state["matches_data"]:
             c, l = infer_country_and_league(
@@ -168,74 +163,47 @@ def render_tab_ingestion():
 
     st.caption("ℹ️ **Origem das Odds:** As cotações (Odds) captadas representam a **Média de Consenso do Mercado Europeu / Global**, agregando os valores das principais casas reguladas (**Betfair Exchange**, **Pinnacle**, **Betano**, **Betclic**, **1xBet** e **OddsPortal**).")
 
-    # Search Configuration Container
     with st.container(border=True):
         st.markdown(f"#### ⚙️ Filtros de Pesquisa ({active_provider})")
         col_f1, col_f2 = st.columns([2, 1])
 
         with col_f1:
-            # Alphabetically sorted options starting with fixed default option
             country_options = [
                 "Todas as Ligas/Países",
-                "Alemanha (Bundesliga / 2. Bundesliga)",
-                "Argentina (Liga Profesional)",
-                "Áustria (Bundesliga)",
-                "Bélgica (Pro League)",
-                "Brasil (Brasileirão Serie A / Serie B)",
-                "Dinamarca (Superliga)",
-                "Escócia (Premiership)",
-                "Espanha (La Liga / Segunda División)",
-                "EUA / América do Norte (MLS)",
-                "Europa (UEFA Champions / Europa League / Conference League)",
-                "França (Ligue 1 / Ligue 2)",
-                "Inglaterra (Premier League / Championship / League 1)",
-                "Islandia (Primeira Liga / Segunda Liga)",
-                "Itália (Serie A / Serie B)",
-                "Noruega (Eliteserien)",
-                "Países Baixos (Eredivisie)",
                 "Portugal (Primeira Liga / Segunda Liga)",
-                "Suécia (Allsvenskan)",
-                "Suíça (Super League)",
-                "Turquia (Süper Lig)"
+                "Inglaterra (Premier League / Championship / League 1)",
+                "Espanha (La Liga / Segunda División)",
+                "Itália (Serie A / Serie B)",
+                "Alemanha (Bundesliga / 2. Bundesliga)",
+                "França (Ligue 1 / Ligue 2)",
+                "Europa (UEFA Champions / Europa League / Conference League)",
+                "Brasil (Brasileirão Serie A / Serie B)",
+                "Países Baixos (Eredivisie / Eerste Divisie)",
+                "Bélgica (Pro League / Challenger Pro League)",
+                "Turquia (Süper Lig / 1. Lig)",
+                "Argentina (Liga Profesional)",
+                "EUA / América do Norte (MLS)",
+                "Escócia (Premiership)",
+                "Suécia (Allsvenskan / Superettan)",
+                "Noruega (Eliteserien / OBOS-ligaen)",
+                "Dinamarca (Superliga / 1st Division)",
+                "Suíça (Super League / Challenge League)",
+                "Áustria (Bundesliga / 2. Liga)",
+                "Islandia (Primeira Liga / Segunda Liga)",
+                "Polónia (Ekstraklasa / 1. Liga)",
+                "Finlândia (Veikkausliiga / Ykkösliiga)",
+                "Grécia (Super League 1 / Super League 2)",
+                "República Checa (Chance Liga / FNL)",
+                "Roménia (SuperLiga / Liga II)",
+                "Croácia (HNL / Prva NL)",
+                "Sérvia (SuperLiga / Prva Liga)",
+                "Japão (J1 League / J2 League)",
+                "México (Liga MX / Liga de Expansión)",
+                "Colômbia (Categoría Primera A / Primera B)"
             ]
             selected_countries = st.multiselect(
                 "Filtrar por Países / Competições Alvo:",
-<<<<<<< HEAD
                 options=country_options,
-=======
-                options=[
-                    "Todas as Ligas/Países",
-                    "Portugal (Primeira Liga / Segunda Liga)",
-                    "Inglaterra (Premier League / Championship / League 1)",
-                    "Espanha (La Liga / Segunda División)",
-                    "Itália (Serie A / Serie B)",
-                    "Alemanha (Bundesliga / 2. Bundesliga)",
-                    "França (Ligue 1 / Ligue 2)",
-                    "Europa (UEFA Champions / Europa League / Conference League)",
-                    "Brasil (Brasileirão Serie A / Serie B)",
-                    "Países Baixos (Eredivisie / Eerste Divisie)",
-                    "Bélgica (Pro League / Challenger Pro League)",
-                    "Turquia (Süper Lig / 1. Lig)",
-                    "Argentina (Liga Profesional)",
-                    "EUA / América do Norte (MLS)",
-                    "Escócia (Premiership)",
-                    "Suécia (Allsvenskan / Superettan)",
-                    "Noruega (Eliteserien / OBOS-ligaen)",
-                    "Dinamarca (Superliga / 1st Division)",
-                    "Suíça (Super League / Challenge League)",
-                    "Áustria (Bundesliga / 2. Liga)",
-                    "Polónia (Ekstraklasa / 1. Liga)",
-                    "Finlândia (Veikkausliiga / Ykkösliiga)",
-                    "Grécia (Super League 1 / Super League 2)",
-                    "República Checa (Chance Liga / FNL)",
-                    "Roménia (SuperLiga / Liga II)",
-                    "Croácia (HNL / Prva NL)",
-                    "Sérvia (SuperLiga / Prva Liga)",
-                    "Japão (J1 League / J2 League)",
-                    "México (Liga MX / Liga de Expansión)",
-                    "Colômbia (Categoría Primera A / Primera B)"
-                ],
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
                 default=["Todas as Ligas/Países"]
             )
 
@@ -249,56 +217,13 @@ def render_tab_ingestion():
             )
 
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Search and Clear Action Buttons inside the Container
         col_btn, col_clear = st.columns([2, 1])
 
-<<<<<<< HEAD
-    with col_btn:
-        btn_label = f"🔎 Pesquisar Jogos via {active_provider.split(' ')[0]}"
-        if st.button(btn_label, type="primary", width="stretch"):
-            if "The Odds API" in active_provider:
-                with st.spinner(f"A obter cotações reais via The Odds API (www.the-odds-api.com) para até {max_matches} jogos de {today_str}..."):
-                    odds_key = st.session_state.get("odds_api_key", "")
-                    matches, msg = OddsApiService.fetch_today_matches(
-                        odds_key,
-                        selected_countries=selected_countries,
-                        max_matches=max_matches
-                    )
-            elif "API-Football" in active_provider:
-                with st.spinner(f"A obter jogos e cotações via API-Football (v3 - api-sports.io) para até {max_matches} jogos de {today_str}..."):
-                    api_f_key = st.session_state.get("api_football_key", "")
-                    matches, msg = ApiFootballIngestionService.fetch_today_matches(
-                        api_f_key,
-                        selected_countries=selected_countries,
-                        max_matches=max_matches
-                    )
-            elif "OddsPortal" in active_provider:
-                with st.spinner(f"A extrair cotações dinâmicas do OddsPortal Feed (www.oddsportal.com) para até {max_matches} jogos de {today_str}..."):
-                    matches, msg = OddsPortalIngestionService.fetch_today_matches(
-                        selected_countries=selected_countries,
-                        max_matches=max_matches
-                    )
-            else:
-                with st.spinner(f"A pesquisar na Web com Gemini 2.5 Flash até {max_matches} jogos reais de {today_str}..."):
-                    matches, msg = GeminiIngestionService.fetch_today_matches(
-                        st.session_state.get("gemini_key", ""),
-                        selected_countries=selected_countries,
-                        max_matches=max_matches
-                    )
-            
-            # Filter out finished matches (keep only scheduled or live matches)
-            finished_statuses = ["FINISHED", "FT", "AET", "PEN", "TERMINADO", "COMPLETED"]
-            matches = [m for m in matches if str(m.get("status", "")).upper() not in finished_statuses]
-
-            st.session_state["matches_data"] = matches
-            st.session_state["last_ingestion_log"] = msg
-=======
         with col_btn:
             btn_label = f"🔎 Pesquisar Jogos via {active_provider.split(' ')[0]}"
             if st.button(btn_label, type="primary", width="stretch"):
                 if "The Odds API" in active_provider:
-                    with st.spinner(f"A obter cotações reais via The Odds API para até {max_matches} jogos..."):
+                    with st.spinner(f"A obter cotações reais via The Odds API (www.the-odds-api.com) para até {max_matches} jogos de {today_str}..."):
                         odds_key = st.session_state.get("odds_api_key", "")
                         raw_matches, msg = OddsApiService.fetch_today_matches(
                             odds_key,
@@ -306,7 +231,7 @@ def render_tab_ingestion():
                             max_matches=max_matches
                         )
                 elif "API-Football" in active_provider:
-                    with st.spinner(f"A obter jogos via API-Football para até {max_matches} jogos..."):
+                    with st.spinner(f"A obter jogos e cotações via API-Football (v3 - api-sports.io) para até {max_matches} jogos de {today_str}..."):
                         api_f_key = st.session_state.get("api_football_key", "")
                         raw_matches, msg = ApiFootballIngestionService.fetch_today_matches(
                             api_f_key,
@@ -314,22 +239,22 @@ def render_tab_ingestion():
                             max_matches=max_matches
                         )
                 elif "OddsPortal" in active_provider:
-                    with st.spinner(f"A extrair cotações do OddsPortal Feed para até {max_matches} jogos..."):
+                    with st.spinner(f"A extrair cotações dinâmicas do OddsPortal Feed (www.oddsportal.com) para até {max_matches} jogos de {today_str}..."):
                         raw_matches, msg = OddsPortalIngestionService.fetch_today_matches(
                             selected_countries=selected_countries,
                             max_matches=max_matches
                         )
                 else:
-                    with st.spinner(f"A pesquisar na Web com Gemini 2.5 Flash até {max_matches} jogos..."):
+                    with st.spinner(f"A pesquisar na Web com Gemini 2.5 Flash até {max_matches} jogos reais de {today_str}..."):
                         raw_matches, msg = GeminiIngestionService.fetch_today_matches(
                             st.session_state.get("gemini_key", ""),
                             selected_countries=selected_countries,
                             max_matches=max_matches
                         )
-                
-                # Apply strict filtering by selected countries and limit by max_matches
+
                 matches, filter_info = filter_matches_by_selection(raw_matches, selected_countries, max_matches)
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
+                finished_statuses = ["FINISHED", "FT", "AET", "PEN", "TERMINADO", "COMPLETED"]
+                matches = [m for m in matches if str(m.get("status", "")).upper() not in finished_statuses]
 
                 st.session_state["matches_data"] = matches
                 st.session_state["last_ingestion_log"] = f"{msg} | {filter_info}"
@@ -350,28 +275,8 @@ def render_tab_ingestion():
 
         with col_clear:
             if st.button("🗑️ Limpar Dados em Memória", width="stretch"):
-                st.session_state["matches_data"] = []
-                st.session_state["analysed_results"] = []
-                st.session_state["last_ingestion_log"] = "Dados de memória e base de dados SQLite limpos."
-                try:
-                    from database.db import clear_db
-                    clear_db()
-                except Exception as db_err:
-<<<<<<< HEAD
-                    print(f"[DB ERROR] Erro ao guardar em SQLite: {db_err}")
+                st.session_state["confirm_clear_ingestion"] = True
 
-            if "Sucesso" in msg:
-                st.success(msg)
-            elif "Aviso" in msg:
-                st.warning(msg)
-            else:
-                st.error(msg)
-
-    with col_clear:
-        if st.button("🗑️ Limpar Dados em Memória", width="stretch"):
-            st.session_state["confirm_clear_ingestion"] = True
-
-    # Security Confirmation Container for Clear Memory Action
     if st.session_state.get("confirm_clear_ingestion", False):
         with st.container(border=True):
             st.warning("⚠️ **Tem a certeza de que deseja limpar todos os dados em memória e na base de dados SQLite?** Todos os jogos captados e análises guardadas serão removidos.")
@@ -395,25 +300,15 @@ def render_tab_ingestion():
                 if st.button("❌ Cancelar", width="stretch"):
                     st.session_state["confirm_clear_ingestion"] = False
                     st.rerun()
-=======
-                    print(f"[DB ERROR] Erro ao limpar SQLite: {db_err}")
-                st.info("Memória de dados e base de dados SQLite limpas com sucesso.")
-                st.rerun()
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
 
     if st.session_state.get("last_ingestion_log"):
         st.info(f"**Último Estado:** {st.session_state['last_ingestion_log']}")
 
     st.markdown("---")
 
-    # Display matches
     matches = st.session_state.get("matches_data", [])
     if not matches:
-<<<<<<< HEAD
-        st.info("💡 **Nenhum jogo em memória de momento.** Clica no botão **'🔎 Pesquisar Jogos via <Provedor>'** acima para pesquisar partidas reais em tempo real.")
-=======
         st.info("💡 **Nenhum jogo em memória de momento.** Clica no botão **'🔎 Pesquisar Jogos'** acima para pesquisar partidas reais em tempo real.")
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
         return
 
     @st.fragment
@@ -429,17 +324,12 @@ def render_tab_ingestion():
         with col_metric:
             st.metric("Total Jogos", f"{len(all_matches)}")
 
-<<<<<<< HEAD
-        # Ensure default date and result values exist
         for m in all_matches:
             if "date" not in m or not m["date"]:
                 m["date"] = f"{today_str} 20:00"
             if "result" not in m or not m["result"]:
                 m["result"] = "Por iniciar"
 
-        # Apply search query filter
-=======
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
         filtered_matches = all_matches
         if search_query:
             q = search_query.lower()
@@ -465,11 +355,7 @@ def render_tab_ingestion():
         df = pd.DataFrame(display_matches)
         if not df.empty:
             column_mapping = {
-<<<<<<< HEAD
                 "date": "Data Jogo",
-=======
-                "date_formatted": "Data do Jogo",
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
                 "country": "País",
                 "league": "Liga",
                 "home": "Equipa Casa",
@@ -492,36 +378,6 @@ def render_tab_ingestion():
             cols_present = [c for c in column_mapping.keys() if c in df.columns]
             display_df = df[cols_present].rename(columns=column_mapping)
 
-<<<<<<< HEAD
-            # Custom Pandas Styler for Mercado Recomendado & Live Match Rows
-            def style_matches_table(data_df):
-                def highlight_cells(row):
-                    res_val = str(row.get("Resultado", "")).lower()
-                    status_val = str(row.get("status", "")).upper()
-                    is_live = "ao vivo" in res_val or "em curso" in res_val or "live" in res_val or status_val == "LIVE"
-                    
-                    styles = [''] * len(row)
-                    
-                    if "Mercado Recomendado" in row.index:
-                        idx_m = row.index.get_loc("Mercado Recomendado")
-                        styles[idx_m] = 'font-weight: bold; color: #38bdf8; background-color: rgba(56, 189, 248, 0.15);'
-                    
-                    if is_live:
-                        if "Resultado" in row.index:
-                            idx_r = row.index.get_loc("Resultado")
-                            styles[idx_r] = 'font-weight: bold; color: #f59e0b; background-color: rgba(245, 158, 11, 0.25);'
-                        for i in range(len(styles)):
-                            if "Mercado Recomendado" in row.index and i == row.index.get_loc("Mercado Recomendado"):
-                                continue
-                            if not styles[i]:
-                                styles[i] = 'background-color: rgba(245, 158, 11, 0.08);'
-                    return styles
-
-                return data_df.style.apply(highlight_cells, axis=1)
-
-            styled_df = style_matches_table(display_df)
-            st.dataframe(styled_df, width="stretch")
-=======
             if "País" in display_df.columns:
                 for idx in display_df.index:
                     home_val = str(display_df.at[idx, "Equipa Casa"]) if "Equipa Casa" in display_df.columns else ""
@@ -545,7 +401,6 @@ def render_tab_ingestion():
                     st.dataframe(display_df, width="stretch")
             else:
                 st.dataframe(display_df, width="stretch")
->>>>>>> bcd5ae0ad2a3dcc5840cd7d5d3acfe89ef908fe4
 
     render_matches_table_fragment(matches)
 

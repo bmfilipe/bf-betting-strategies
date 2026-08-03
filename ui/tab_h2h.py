@@ -113,8 +113,7 @@ def render_tab_h2h():
                 go.Bar(name=tb_name, x=categories, y=[tb_stats.get('avg_scored'), tb_stats.get('avg_conceded'), tb_stats.get('xg')], marker_color='#f43f5e')
             ])
             fig_bar.update_layout(barmode='group', template='plotly_dark', margin=dict(l=20, r=20, t=30, b=20), height=300)
-            st.plotly_chart(fig_bar, use_container_width=True)
-
+            st.plotly_chart(fig_bar, width="stretch")
         with ch_col2:
             st.markdown("#### ⚽ Histórico de Confrontos Diretos (H2H)")
             total_m = result.get("total_matches", 0)
@@ -128,7 +127,7 @@ def render_tab_h2h():
 
             fig_pie = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.4, marker_colors=colors)])
             fig_pie.update_layout(template='plotly_dark', margin=dict(l=20, r=20, t=30, b=20), height=300)
-            st.plotly_chart(fig_pie, use_container_width=True)
+            st.plotly_chart(fig_pie, width="stretch")
 
         # Historical Match Table
         st.markdown(f"#### 📜 Histórico Recente de Jogos H2H ({total_m} partidas registadas)")
@@ -136,7 +135,7 @@ def render_tab_h2h():
         if h2h_list:
             df_h2h = pd.DataFrame(h2h_list)
             df_h2h.columns = ["Data", "Época", "Competição", "Equipa Casa", "Equipa Fora", "Golos Casa", "Golos Fora", "Vencedor"]
-            st.dataframe(df_h2h, use_container_width=True, hide_index=True)
+            st.dataframe(df_h2h, width="stretch", hide_index=True)
 
         # Poisson Simulation Projection for Team A vs Team B
         st.markdown(f"#### 🔮 Matriz de Poisson Preditiva ({ta_name} vs {tb_name})")
