@@ -29,31 +29,33 @@ def render_tab_ingestion():
         col_f1, col_f2 = st.columns([2, 1])
 
         with col_f1:
+            # Alphabetically sorted options starting with fixed default option
+            country_options = [
+                "Todas as Ligas/Países",
+                "Alemanha (Bundesliga / 2. Bundesliga)",
+                "Argentina (Liga Profesional)",
+                "Áustria (Bundesliga)",
+                "Bélgica (Pro League)",
+                "Brasil (Brasileirão Serie A / Serie B)",
+                "Dinamarca (Superliga)",
+                "Escócia (Premiership)",
+                "Espanha (La Liga / Segunda División)",
+                "EUA / América do Norte (MLS)",
+                "Europa (UEFA Champions / Europa League / Conference League)",
+                "França (Ligue 1 / Ligue 2)",
+                "Inglaterra (Premier League / Championship / League 1)",
+                "Islandia (Primeira Liga / Segunda Liga)",
+                "Itália (Serie A / Serie B)",
+                "Noruega (Eliteserien)",
+                "Países Baixos (Eredivisie)",
+                "Portugal (Primeira Liga / Segunda Liga)",
+                "Suécia (Allsvenskan)",
+                "Suíça (Super League)",
+                "Turquia (Süper Lig)"
+            ]
             selected_countries = st.multiselect(
                 "Filtrar por Países / Competições Alvo:",
-                options=[
-                    "Todas as Ligas/Países",
-                    "Portugal (Primeira Liga / Segunda Liga)",
-                    "Inglaterra (Premier League / Championship / League 1)",
-                    "Espanha (La Liga / Segunda División)",
-                    "Itália (Serie A / Serie B)",
-                    "Alemanha (Bundesliga / 2. Bundesliga)",
-                    "França (Ligue 1 / Ligue 2)",
-                    "Europa (UEFA Champions / Europa League / Conference League)",
-                    "Brasil (Brasileirão Serie A / Serie B)",
-                    "Países Baixos (Eredivisie)",
-                    "Bélgica (Pro League)",
-                    "Turquia (Süper Lig)",
-                    "Argentina (Liga Profesional)",
-                    "EUA / América do Norte (MLS)",
-                    "Escócia (Premiership)",
-                    "Suécia (Allsvenskan)",
-                    "Noruega (Eliteserien)",
-                    "Dinamarca (Superliga)",
-                    "Suíça (Super League)",
-                    "Áustria (Bundesliga)",
-                    "Outras Ligas Internacionais"
-                ],
+                options=country_options,
                 default=["Todas as Ligas/Países"]
             )
 
@@ -101,6 +103,10 @@ def render_tab_ingestion():
                         max_matches=max_matches
                     )
             
+            # Filter out finished matches (keep only scheduled or live matches)
+            finished_statuses = ["FINISHED", "FT", "AET", "PEN", "TERMINADO", "COMPLETED"]
+            matches = [m for m in matches if str(m.get("status", "")).upper() not in finished_statuses]
+
             st.session_state["matches_data"] = matches
             st.session_state["last_ingestion_log"] = msg
 
@@ -120,16 +126,32 @@ def render_tab_ingestion():
 
     with col_clear:
         if st.button("🗑️ Limpar Dados em Memória", width="stretch"):
-            st.session_state["matches_data"] = []
-            st.session_state["analysed_results"] = []
-            st.session_state["last_ingestion_log"] = "Dados de memória e base de dados SQLite limpos."
-            try:
-                from database.db import clear_db
-                clear_db()
-            except Exception as db_err:
-                print(f"[DB ERROR] Erro ao limpar SQLite: {db_err}")
-            st.info("Memória de dados e base de dados SQLite limpas com sucesso.")
-            st.rerun()
+            st.session_state["confirm_clear_ingestion"] = True
+
+    # Security Confirmation Container for Clear Memory Action
+    if st.session_state.get("confirm_clear_ingestion", False):
+        with st.container(border=True):
+            st.warning("⚠️ **Tem a certeza de que deseja limpar todos os dados em memória e na base de dados SQLite?** Todos os jogos captados e análises guardadas serão removidos.")
+            col_c_yes, col_c_no, _ = st.columns([1, 1, 2])
+
+            with col_c_yes:
+                if st.button("✅ Sim, Limpar Tudo", type="primary", width="stretch"):
+                    st.session_state["matches_data"] = []
+                    st.session_state["analysed_results"] = []
+                    st.session_state["last_ingestion_log"] = "Dados de memória e base de dados SQLite limpos."
+                    st.session_state["confirm_clear_ingestion"] = False
+                    try:
+                        from database.db import clear_db
+                        clear_db()
+                    except Exception as db_err:
+                        print(f"[DB ERROR] Erro ao limpar SQLite: {db_err}")
+                    st.info("Memória de dados e base de dados SQLite limpas com sucesso.")
+                    st.rerun()
+
+            with col_c_no:
+                if st.button("❌ Cancelar", width="stretch"):
+                    st.session_state["confirm_clear_ingestion"] = False
+                    st.rerun()
 
     if st.session_state.get("last_ingestion_log"):
         st.info(f"**Último Estado:** {st.session_state['last_ingestion_log']}")
@@ -139,7 +161,7 @@ def render_tab_ingestion():
     # Display matches
     matches = st.session_state.get("matches_data", [])
     if not matches:
-        st.info("💡 **Nenhum jogo em memória de momento.** Clica no botão **'🔎 Pesquisar Jogos de Hoje'** acima para pesquisar partidas reais em tempo real via Gemini Flash.")
+        st.info("💡 **Nenhum jogo em memória de momento.** Clica no botão **'🔎 Pesquisar Jogos via <Provedor>'** acima para pesquisar partidas reais em tempo real.")
         return
 
     @st.fragment
@@ -148,13 +170,20 @@ def render_tab_ingestion():
         col_search, col_show, col_metric = st.columns([2, 1, 1])
 
         with col_search:
-            search_query = st.text_input("🔍 Pesquisar em jogos encontrados (equipa, liga, mercado...):", "", key="ingest_search_query")
+            search_query = st.text_input("🔍 Pesquisar em jogos encontrados (equipa, liga, mercado, data, resultado...):", "", key="ingest_search_query")
 
         with col_show:
             show_option = st.selectbox("Mostrar partidas:", options=[20, 50, 100, "Tudo"], index=0, key="ingest_show_option")
 
         with col_metric:
             st.metric("Total Jogos", f"{len(all_matches)}")
+
+        # Ensure default date and result values exist
+        for m in all_matches:
+            if "date" not in m or not m["date"]:
+                m["date"] = f"{today_str} 20:00"
+            if "result" not in m or not m["result"]:
+                m["result"] = "Por iniciar"
 
         # Apply search query filter
         filtered_matches = all_matches
@@ -167,6 +196,8 @@ def render_tab_ingestion():
                 or q in str(m.get("country", "")).lower()
                 or q in str(m.get("league", "")).lower()
                 or q in str(m.get("market", "")).lower()
+                or q in str(m.get("date", "")).lower()
+                or q in str(m.get("result", "")).lower()
             ]
 
         # Apply limit
@@ -181,6 +212,7 @@ def render_tab_ingestion():
         df = pd.DataFrame(display_matches)
         if not df.empty:
             column_mapping = {
+                "date": "Data Jogo",
                 "country": "País",
                 "league": "Liga",
                 "home": "Equipa Casa",
@@ -193,23 +225,41 @@ def render_tab_ingestion():
                 "odd_o25": "Odd (+2.5)",
                 "odd_btts_yes": "Odd (BTTS Sim)",
                 "odd_btts_no": "Odd (BTTS Não)",
-                "market": "Mercado Recomendado"
+                "market": "Mercado Recomendado",
+                "result": "Resultado"
             }
 
             cols_present = [c for c in column_mapping.keys() if c in df.columns]
             display_df = df[cols_present].rename(columns=column_mapping)
 
-            def bold_market(val):
-                return 'font-weight: bold; color: #38bdf8; background-color: rgba(56, 189, 248, 0.15);'
+            # Custom Pandas Styler for Mercado Recomendado & Live Match Rows
+            def style_matches_table(data_df):
+                def highlight_cells(row):
+                    res_val = str(row.get("Resultado", "")).lower()
+                    status_val = str(row.get("status", "")).upper()
+                    is_live = "ao vivo" in res_val or "em curso" in res_val or "live" in res_val or status_val == "LIVE"
+                    
+                    styles = [''] * len(row)
+                    
+                    if "Mercado Recomendado" in row.index:
+                        idx_m = row.index.get_loc("Mercado Recomendado")
+                        styles[idx_m] = 'font-weight: bold; color: #38bdf8; background-color: rgba(56, 189, 248, 0.15);'
+                    
+                    if is_live:
+                        if "Resultado" in row.index:
+                            idx_r = row.index.get_loc("Resultado")
+                            styles[idx_r] = 'font-weight: bold; color: #f59e0b; background-color: rgba(245, 158, 11, 0.25);'
+                        for i in range(len(styles)):
+                            if "Mercado Recomendado" in row.index and i == row.index.get_loc("Mercado Recomendado"):
+                                continue
+                            if not styles[i]:
+                                styles[i] = 'background-color: rgba(245, 158, 11, 0.08);'
+                    return styles
 
-            if "Mercado Recomendado" in display_df.columns:
-                if hasattr(display_df.style, "map"):
-                    styled_df = display_df.style.map(bold_market, subset=["Mercado Recomendado"])
-                else:
-                    styled_df = display_df.style.applymap(bold_market, subset=["Mercado Recomendado"])
-                st.dataframe(styled_df, width="stretch")
-            else:
-                st.dataframe(display_df, width="stretch")
+                return data_df.style.apply(highlight_cells, axis=1)
+
+            styled_df = style_matches_table(display_df)
+            st.dataframe(styled_df, width="stretch")
 
     render_matches_table_fragment(matches)
 

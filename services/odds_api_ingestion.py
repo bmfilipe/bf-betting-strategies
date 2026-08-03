@@ -40,12 +40,7 @@ class OddsApiService:
         "Dinamarca (Superliga)": ["soccer_denmark_superliga"],
         "Suíça (Super League)": ["soccer_switzerland_superleague"],
         "Áustria (Bundesliga)": ["soccer_austria_bundesliga"],
-        "Outras Ligas Internacionais": [
-            "soccer_greece_super_league",
-            "soccer_poland_ekstraklasa",
-            "soccer_japan_j_league",
-            "soccer_chile_campeonato"
-        ]
+        "Islandia (Primeira Liga / Segunda Liga)": ["soccer_iceland_urvalsdeild"]
     }
 
     @staticmethod

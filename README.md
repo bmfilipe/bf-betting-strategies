@@ -140,18 +140,13 @@ A aplicação combina ingestão de dados em tempo real através de múltiplos pr
 ```text
 bf-betting-strategies/
 ├── .agents/                    # Skills e diretivas de desenvolvimento Streamlit
-├── .streamlit/                 # Definições de tema e segredos local (config.toml, secrets.toml)
-├── database/                   # Módulo e armazenamento SQLite
-│   ├── bfbetting.db            # Ficheiro de base de dados relacional
-│   └── db.py                   # Gestor SQL (tabelas, índices, backup JSON)
-├── models/                     # Motores estatísticos (poisson.py, kelly.py, etc.)
-├── services/                   # Integrações com APIs externas (Gemini, Odds API, Colab)
-├── ui/                         # Componentes e abas da interface web
-│   ├── styles.py               # CSS customizado e alternador Dark/Light
-│   ├── tab_ingestion.py        # Tab 1: Captação de jogos e filtragem
-│   ├── tab_analysis.py         # Tab 2: Análise quantitativa Poisson & +EV
-│   ├── tab_slips.py            # Tab 3: Gerador de boletins e exportações
-│   └── tab_admin.py            # Tab 4: Painel Admin, Vault, Backup JSON e Sobre
+│   └── rules/                  # Regras detalhadas por página (filtros, botões, base de dados e matemática)
+│       ├── 01_landing_and_nav_rules.md
+│       ├── 02_ingestion_page_rules.md
+│       ├── 03_analysis_page_rules.md
+│       ├── 04_slips_page_rules.md
+│       ├── 05_admin_page_rules.md
+│       └── 06_database_and_math_rules.md
 ├── app.py                      # Ponto de entrada da aplicação Streamlit
 ├── config.py                   # Inicialização de estado e segredos
 ├── requirements.txt            # Lista de dependências Python

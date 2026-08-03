@@ -28,7 +28,10 @@ DEFAULT_MOCK_MATCHES = [
         "away_form": "D-E-V-D-E",
         "h2h_summary": "Últimos 3 confrontos: 2 Vitórias Benfica, 1 Empate (Média 3.3 golos/jogo)",
         "odd": 1.45,
-        "market": "Vitória Casa (1)"
+        "market": "Vitória Casa (1)",
+        "date": "03/08/2026 21:00",
+        "result": "1-0 (Ao Vivo)",
+        "status": "LIVE"
     },
     {
         "country": "Europa",
@@ -51,7 +54,10 @@ DEFAULT_MOCK_MATCHES = [
         "away_form": "E-V-D-E-V",
         "h2h_summary": "Primeiro confronto direto oficial registrado.",
         "odd": 1.68,
-        "market": "Vitória Casa (1)"
+        "market": "Vitória Casa (1)",
+        "date": "03/08/2026 20:30",
+        "result": "Por iniciar",
+        "status": "SCHEDULED"
     },
     {
         "country": "Europa",
